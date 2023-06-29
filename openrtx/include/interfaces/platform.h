@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <hwconfig.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,6 +37,21 @@ extern "C" {
  * - Volume and channel selectors
  * - Screen backlight control
  */
+
+/**
+ * Datastructure for describing a memory device over rtxlink
+ */
+typedef struct meminfo_t {
+    uint32_t size;  // Size of the memory in Bytes
+    char name[24];  // Name of the memory
+    uint32_t index; // Index for referencing this memory for FMP commands
+} meminfo_t;
+// sizeof(meminfo_t) == 25;
+
+/**
+ * Array for describing available memory devices for backup purposes
+ */
+extern meminfo_t available_mem[AVAILABLE_MEM_SIZE];
 
 /**
  * \enum led_t Enumeration type for platform LED control. To allow for a wide

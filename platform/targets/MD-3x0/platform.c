@@ -32,6 +32,17 @@
 md3x0Calib_t calibration;
 hwInfo_t hwInfo;
 
+/**
+ * This array describes the memory devices mounted on the radio
+ */
+meminfo_t available_mem[] = {
+    {
+        16000000, // 128Mbit == 16MB
+        "25Q128FV SPI flash",
+        0,
+    },
+};
+
 void platform_init()
 {
     /* Configure GPIOs */

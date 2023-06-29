@@ -21,6 +21,8 @@
 #ifndef FMP_H
 #define FMP_H
 
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

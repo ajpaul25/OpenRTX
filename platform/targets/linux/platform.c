@@ -28,6 +28,22 @@ extern Uint32 SDL_Backlight_Event;
 
 hwInfo_t hwInfo;
 
+/**
+ * This array describes the memory devices mounted on the radio
+ */
+meminfo_t available_mem[] = {
+    {
+        16000000, // 128Mbit == 16MB
+        "Dummy Memory",
+        0,
+    },
+    {
+        32000000, // 128Mbit == 16MB
+        "Dummy Memory 2",
+        1,
+    },
+};
+
 void platform_init()
 {
     com_init();

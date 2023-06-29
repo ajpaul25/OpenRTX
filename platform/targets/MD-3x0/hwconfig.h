@@ -101,6 +101,9 @@ extern "C" {
 #define CTCSS_OUT GPIOC,7   /* System "beep" */
 #define BEEP_OUT  GPIOC,8   /* CTCSS tone    */
 
+/* Available Memories */
+#define AVAILABLE_MEM_SIZE 1
+
 /* External flash */
 #define FLASH_CS  GPIOD,7
 #define FLASH_CLK GPIOB,3

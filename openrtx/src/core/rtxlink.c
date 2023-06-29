@@ -100,22 +100,8 @@ void rtxlink_init()
 
 void rtxlink_task()
 {
-    if(fetchSlipFrame() == true)
-    {
-        uint8_t crc = crc_8bit(rxDataBuf, rxDataBufLen - 1);
-        if(crc == rxDataBuf[rxDataBufLen - 1])
-        {
-            uint8_t protocol = rxDataBuf[0];
-            uint8_t *data    = &rxDataBuf[1];
-            size_t  dataLen  = rxDataBufLen - 2;
 
-            protoHandler handler = handlers[protocol];
-            if(handler != NULL)
-                handler(data, dataLen);
-        }
-    }
-
-    // There is some data left to send
+    // If we have data to send, finish sending, otherwise receive
     if(txDataBufPos < txDataBufLen)
     {
         size_t toSend = txDataBufLen - txDataBufPos;
@@ -124,16 +110,32 @@ void rtxlink_task()
         ssize_t sent = com_writeBlock(&txDataBuf[txDataBufPos], toSend);
         if(sent > 0)
             txDataBufPos += sent;
-    }
-    // If all the data has already been sent
-    if(txDataBufPos >= txDataBufLen)
-    {
-        txDataBufPos = 0;
-        txDataBufLen = 0;
+        // If all the data has already been sent
+        if(txDataBufPos >= txDataBufLen)
+        {
+            txDataBufPos = 0;
+            txDataBufLen = 0;
+        }
+    } else {
+        if(fetchSlipFrame() == true)
+        {
+            uint8_t crc = crc_8bit(rxDataBuf, rxDataBufLen - 1);
+            if(crc == rxDataBuf[rxDataBufLen - 1])
+            {
+                uint8_t protocol = rxDataBuf[0];
+                uint8_t *data    = &rxDataBuf[1];
+                size_t  dataLen  = rxDataBufLen - 2;
+
+                protoHandler handler = handlers[protocol];
+                if(handler != NULL)
+                    handler(data, dataLen);
+            }
+        }
+
+        // Flush old data to start fetching a new frame
+        rxDataBufLen = 0;
     }
 
-    // Flush old data to start fetching a new frame
-    rxDataBufLen = 0;
 }
 
 void rtxlink_terminate()

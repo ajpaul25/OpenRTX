@@ -62,6 +62,9 @@ extern "C" {
 /* Push-to-talk switch */
 #define PTT_SW "PTT_SW",11
 
+/* Available memories */
+#define AVAILABLE_MEM_SIZE 2
+
 #ifdef __cplusplus
 }
 #endif

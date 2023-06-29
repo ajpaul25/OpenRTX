@@ -36,7 +36,7 @@ enum ProtocolID
 {
     RTXLINK_FRAME_STDIO  = 0x00,
     RTXLINK_FRAME_CAT    = 0x01,
-    RTXLINK_FRAME_FMP     = 0x02,
+    RTXLINK_FRAME_FMP    = 0x02,
     RTXLINK_FRAME_XMODEM = 0x03
 };
 

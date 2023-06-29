@@ -18,21 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <fmp.h>
+#include <hwconfig.h>
 #include <interfaces/platform.h>
 #include <rtxlink.h>
-//#include <string.h>
-//#include <state.h>
-#include <fmp.h>
-
-/**
- * Datastructure for describing a memory device over rtxlink
- */
-struct __attribute__((packed)) meminfo_t {
-    uint32_t size;
-    char name[22];
-    uint8_t index;
-};
-// sizeof(struct meminfo_t) == 32;
+#include <string.h>
 
 /**
  * FMP Protocol Opcodes
@@ -52,7 +42,8 @@ enum opcode {
     FMP_OP_RESET   = 0xff,
 };
 
-static void fmp_sendAck(enum opcode opcode, const uint8_t status) {
+static void fmp_sendAck(enum opcode opcode, const uint8_t status)
+{
     uint8_t reply[3];
     reply[0] = opcode; // Opcode byte
     reply[1] = status; // Status code
@@ -61,14 +52,22 @@ static void fmp_sendAck(enum opcode opcode, const uint8_t status) {
     rtxlink_send(RTXLINK_FRAME_FMP, reply, 3);
 }
 
-static void fmp_opMemInfo() {
-    // TODO: Allocate memory for the whole frame
-    uint8_t reply[3];
+#define MEMINFO_REPLY_SIZE 3 + (AVAILABLE_MEM_SIZE * (sizeof(meminfo_t) + 1))
+static void fmp_opMemInfo()
+{
+    // Allocate memory for the whole frame
+    uint8_t reply[MEMINFO_REPLY_SIZE];
     reply[0] = FMP_OP_MEMINFO; // Opcode byte
     reply[1] = OK; // Status code
-    reply[1] = 0;      // 0 Extra params
+    reply[2] = AVAILABLE_MEM_SIZE;      // 1 Extra parameter
+    for(int i = 0; i < AVAILABLE_MEM_SIZE; i++) {
+        // Start pushing data from byte 2
+        size_t offset = 3 + i * (sizeof(meminfo_t) + 1);
+        reply[offset] = sizeof(meminfo_t);
+        memcpy(reply + offset + 1, (void *) &(available_mem[i]), sizeof(meminfo_t));
+    }
 
-    rtxlink_send(RTXLINK_FRAME_FMP, reply, 3);
+    rtxlink_send(RTXLINK_FRAME_FMP, reply, MEMINFO_REPLY_SIZE);
 }
 
 /**
