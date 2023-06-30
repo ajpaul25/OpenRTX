@@ -55,16 +55,21 @@ static void fmp_sendAck(enum opcode opcode, const uint8_t status)
 #define MEMINFO_REPLY_SIZE 3 + (AVAILABLE_MEM_SIZE * (sizeof(meminfo_t) + 1))
 static void fmp_opMemInfo()
 {
+    size_t offset = 0;
     // Allocate memory for the whole frame
     uint8_t reply[MEMINFO_REPLY_SIZE];
-    reply[0] = FMP_OP_MEMINFO; // Opcode byte
-    reply[1] = OK; // Status code
-    reply[2] = AVAILABLE_MEM_SIZE;      // 1 Extra parameter
+    memset(reply, 0x00, MEMINFO_REPLY_SIZE);
+    reply[offset++] = FMP_OP_MEMINFO; // Opcode byte
+    reply[offset++] = OK; // Status code
+    reply[offset++] = AVAILABLE_MEM_SIZE;
+    // Push params lengths
+    for(int i = 0; i < AVAILABLE_MEM_SIZE; i++)
+        reply[offset++] = sizeof(meminfo_t);
+    // Push params contents
     for(int i = 0; i < AVAILABLE_MEM_SIZE; i++) {
-        // Start pushing data from byte 2
-        size_t offset = 3 + i * (sizeof(meminfo_t) + 1);
-        reply[offset] = sizeof(meminfo_t);
-        memcpy(reply + offset + 1, (void *) &(available_mem[i]), sizeof(meminfo_t));
+        memcpy(reply + offset + (i * sizeof(meminfo_t)),
+               (void *) &(available_mem[i]),
+               sizeof(meminfo_t));
     }
 
     rtxlink_send(RTXLINK_FRAME_FMP, reply, MEMINFO_REPLY_SIZE);

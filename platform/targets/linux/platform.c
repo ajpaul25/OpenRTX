@@ -38,7 +38,7 @@ meminfo_t available_mem[] = {
         0,
     },
     {
-        32000000, // 128Mbit == 16MB
+        32000000, // 256Mbit == 32MB
         "Dummy Memory 2",
         1,
     },
