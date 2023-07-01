@@ -75,6 +75,12 @@ static void fmp_opMemInfo()
     rtxlink_send(RTXLINK_FRAME_FMP, reply, MEMINFO_REPLY_SIZE);
 }
 
+static void fmp_opDump(size_t alen, const uint8_t *args)
+{
+    // TODO: Extract memory ID from first parameter
+    // TODO: Send memory content via xmodem transfer
+}
+
 /**
  * \internal
  * FMP protocol handler for rtxlink.
@@ -87,6 +93,7 @@ static void fmp_protoCallback(const uint8_t *data, const size_t len)
     switch(data[0])
     {
         case FMP_OP_MEMINFO:  fmp_opMemInfo(); break; // Request Memory Information
+        case FMP_OP_DUMP:     fmp_opDump(args, alen); break; // Dump memory content via xmodem
         default:              fmp_sendAck(FMP_OP_ACK, EBADRQC); break; // Invalid opcode
     }
 }
