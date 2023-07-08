@@ -411,6 +411,13 @@ mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
 mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 ##
+## OpenHT
+##
+openht_src = src + stm32f469_src + ['platform/targets/OpenHT/platform.c']
+openht_inc = inc + stm32f469_inc + ['platform/targets/OpenHT']
+openht_def = def + stm32f469_def + {'PLATFORM_OPENHT': ''}
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -495,6 +502,15 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+openht_args = []
+foreach k, v : openht_def
+  if v == ''
+    openht_args += '-D@0@'.format(k)
+  else
+    openht_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'cpp_args' : linux_cpp_args,
@@ -550,6 +566,14 @@ mod17_opts  = {'sources': mod17_src,
                'dependencies': [codec2_dep],
                'include_directories': mod17_inc}
 
+openht_opts = {'sources': openht_src,
+               'c_args': openht_args,
+               'cpp_args': openht_args,
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f469_xram.ld',
+                              '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
+               'include_directories': openht_inc}
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -592,6 +616,12 @@ targets = [
 
    {'name': 'mod17',
    'opts': mod17_opts,
+   'flashable': true,
+   'wrap': ' ',
+   'load_addr': ' '},
+
+   {'name': 'openht',
+   'opts': openht_opts,
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
