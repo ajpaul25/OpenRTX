@@ -138,7 +138,7 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
     return ((ssize_t) readLen);
 }
 
-void W25Qx_readData(uint32_t addr, void* buf, size_t len)
+int W25Qx_readData(uint32_t addr, void* buf, size_t len)
 {
     gpio_clearPin(FLASH_CS);
     spiFlash_SendRecv(CMD_READ);             /* Command        */
@@ -152,31 +152,41 @@ void W25Qx_readData(uint32_t addr, void* buf, size_t len)
     }
 
     gpio_setPin(FLASH_CS);
+
+    return 0;
 }
 
-bool W25Qx_eraseSector(uint32_t addr)
+int W25Qx_erase(uint32_t addr, size_t size)
 {
+    // Bad: address or size are not sector aligned
+    if(((addr % 0x1000) != 0) || ((size % 0x1000) != 0))
+        return -EINVAL;
+
     gpio_clearPin(FLASH_CS);
     spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
-    gpio_clearPin(FLASH_CS);
-    spiFlash_SendRecv(CMD_ESECT);            /* Command        */
-    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-    gpio_setPin(FLASH_CS);
+    int ret = 0;
+    while(size > 0)
+    {
+        gpio_clearPin(FLASH_CS);
+        spiFlash_SendRecv(CMD_ESECT);            /* Command        */
+        spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+        spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+        spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+        gpio_setPin(FLASH_CS);
 
-    /*
-     * Wait until erase terminates, timeout after 500ms.
-     */
-    int ret = waitUntilReady(500);
-    if(ret == 0)
-        return true;
+        ret = waitUntilReady(500);
+        if(ret < 0)
+            break;
 
-    return false;
+        size -= 0x1000;
+        addr += 0x1000;
+    }
+
+    return ret;
 }
 
 bool W25Qx_eraseChip()
@@ -201,7 +211,7 @@ bool W25Qx_eraseChip()
     return false;
 }
 
-ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
+ssize_t W25Qx_writePage(uint32_t addr, const void* buf, size_t len)
 {
     /* Keep 256-byte boundary to avoid wrap-around when writing */
     size_t addrRange = addr & 0x0000FF;
@@ -234,56 +244,33 @@ ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
     /*
      * Wait until erase terminates, timeout after 500ms.
      */
-    return waitUntilReady(500);
+    int ret = waitUntilReady(500);
+    if(ret < 0)
+        return (ssize_t) ret;
+
+    return writeLen;
 }
 
-bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
+int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
 {
-    /* Fail if we are trying to write more than 4K bytes */
-    if(len > 4096) return false;
+    static const uint16_t pageSize = 256;
 
-    /* Fail if we are trying to write across 4K blocks: this would erase two 4K
-     * blocks for one write, which is not good for flash life.
-     * We calculate block address using integer division of start and end address
-     */
-    uint32_t startBlockAddr = addr / 4096 * 4096;
-    uint32_t endBlockAddr = (addr + len - 1) / 4096 * 4096;
-    if(endBlockAddr != startBlockAddr)
-        return false;
-
-    /* Before writing, check if we're not trying to write the same content */
-    uint8_t *flashData = ((uint8_t *) malloc(len));
-    W25Qx_readData(addr, flashData, len);
-    if(memcmp(buf, flashData, len) == 0)
+    while(len > 0)
     {
-        free(flashData);
-        return true;
+        size_t toWrite = len;
+
+        // Maximum single-shot write lenght is one page
+        if(toWrite >= pageSize)
+            toWrite = pageSize;
+
+        ssize_t written = W25Qx_writePage(addr, buf, toWrite);
+        if(written < 0)
+            return (int) written;
+
+        len  -= (size_t) written;
+        buf   = ((const uint8_t *) buf) + (size_t) written;
+        addr += (size_t) written;
     }
 
-    free(flashData);
-
-    /* Perform the actual read-erase-write of flash data. */
-    uint8_t *flashBlock = ((uint8_t *) malloc(4096));
-    W25Qx_readData(startBlockAddr, flashBlock, 4096);
-
-    /* Overwrite changed portion */
-    uint32_t blockOffset = addr % 4096;
-    memcpy(&flashBlock[blockOffset], buf, len);
-
-    /* Erase the 4K block */
-    if(!W25Qx_eraseSector(startBlockAddr))
-    {
-        /* Erase operation failed, return failure */
-        free(flashBlock);
-        return false;
-    }
-
-    /* Write back the modified 4K block in chunks of 256 bytes */
-    for(uint32_t offset = 0; offset < 4096; offset += 256)
-    {
-        W25Qx_writePage(startBlockAddr + offset, &flashBlock[offset], 256);
-    }
-
-    free(flashBlock);
-    return true;
+    return 0;
 }
