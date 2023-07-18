@@ -23,11 +23,17 @@
 
 #include <stdint.h>
 #include <sys/types.h>
+#include "block_device.h"
 
 /**
  * Driver for ATMEL AT24Cx family of I2C EEPROM devices, used as external non
  * volatile memory on various radios to store global settings and contact data.
  */
+
+/**
+ * Block device descriptor for this family.
+ */
+extern const struct block_device AT24Cx_bd;
 
 /**
  * Initialise driver for external EEPROM.

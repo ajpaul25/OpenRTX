@@ -26,6 +26,7 @@
 
 static const uint8_t DEV_ADDR    = 0xA0;    /* EEPROM I2C address */
 static const size_t  PAGE_SIZE   = 128;
+static const size_t  EEPROM_SIZE = 65536;   /* 512 kbit, 64KB     */
 
 void AT24Cx_init()
 {
@@ -91,3 +92,24 @@ void AT24Cx_writeData(uint32_t addr, const void *buf, size_t len)
     i2c0_releaseDevice();
 }
 
+static const struct bd_info AT24Cx_info =
+{
+    .type        = BD_EEPROM,
+    .page_count  = EEPROM_SIZE/PAGE_SIZE,
+    .page_size   = PAGE_SIZE,
+    .page_cycles = 1000000
+};
+
+static const struct bd_driver_api AT24Cx_api =
+{
+    .read  = AT24Cx_readData,
+    .write = AT24Cx_writeData,
+    .erase = NULL,
+    .sync  = NULL
+};
+
+const struct blockDevice AT24Cx_bd =
+{
+    .info = &AT24Cx_info,
+    .api  = &AT24Cx_api
+};
