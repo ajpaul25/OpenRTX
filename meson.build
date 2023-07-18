@@ -326,7 +326,8 @@ md3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MD3x0.c
                                              'platform/targets/MD-3x0/platform.c']
 
 md3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-3x0']
-md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime'}
+md3x0_def = def + stm32f405_def + {'PLATFORM_MD3x0': '', 'timegm': 'mktime',
+                                   'CONFIG_FLASH_W25Q128': ''}
 
 ##
 ## TYT MD-UV380
@@ -343,7 +344,8 @@ mduv3x0_src = src + mdx_src + stm32f405_src + ['platform/drivers/NVM/nvmem_MDUV3
                                                'platform/drivers/baseband/HR_C6000_UV3x0.cpp']
 
 mduv3x0_inc = inc + stm32f405_inc + ['platform/targets/MD-UV3x0']
-mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime'}
+mduv3x0_def = def + stm32f405_def + {'PLATFORM_MDUV3x0': '', 'timegm': 'mktime',
+                                     'CONFIG_FLASH_W25Q128': ''}
 
 ##
 ## TYT MD-9600
@@ -358,7 +360,7 @@ md9600_src = src + mdx_src + stm32f405_src + ['platform/targets/MD-9600/platform
                                               'platform/drivers/CPS/cps_io_native_MD9600.c']
 
 md9600_inc = inc + stm32f405_inc + ['platform/targets/MD-9600']
-md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
+md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': '', 'CONFIG_FLASH_W25Q128': ''}
 
 ##
 ## Radioddity GD-77
@@ -366,7 +368,7 @@ md9600_def = def + stm32f405_def + {'PLATFORM_MD9600': ''}
 gd77_src = src + gdx_src + mk22fn512_src + ['platform/targets/GD-77/platform.c']
 
 gd77_inc = inc + mk22fn512_inc + ['platform/targets/GD-77']
-gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
+gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': '', 'CONFIG_FLASH_W25Q80': ''}
 
 ##
 ## Baofeng DM-1801
@@ -374,7 +376,7 @@ gd77_def = def + mk22fn512_def + {'PLATFORM_GD77': ''}
 dm1801_src = src + gdx_src + mk22fn512_src + ['platform/targets/DM-1801/platform.c']
 
 dm1801_inc = inc + mk22fn512_inc + ['platform/targets/DM-1801']
-dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': ''}
+dm1801_def = def + mk22fn512_def + {'PLATFORM_DM1801': '', 'CONFIG_FLASH_W25Q80': ''}
 
 ##
 ## Module 17

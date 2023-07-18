@@ -24,11 +24,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/types.h>
+#include "block_device.h"
 
 /**
  * Driver for Winbond W25Qx family of SPI flash devices, used as external non
  * volatile memory on various radios to store both calibration and contact data.
  */
+
+/**
+ * Block device descriptor for this family.
+ */
+extern const struct blockDevice W25Qx_bd;
 
 /**
  * Initialise driver for external flash.

@@ -45,6 +45,17 @@ extern uint8_t spiFlash_SendRecv(uint8_t val);
 extern void spiFlash_init();
 extern void spiFlash_terminate();
 
+static const size_t PAGE_SIZE  = 256;
+static const size_t SECT_SIZE  = 4096;
+
+#if defined(CONFIG_FLASH_W25Q80)
+static const size_t FLASH_SIZE = 0x100000;   /* 8 Mbit, 1MB     */
+#elif defined(CONFIG_FLASH_W25Q128)
+static const size_t FLASH_SIZE = 0x1000000;  /* 128 Mbit, 16 MB */
+#else
+#error "No W25Qx flash size defined!"
+#endif
+
 /**
  * \internal
  * Wait until an erase or write operation finishes.
@@ -140,6 +151,9 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
 
 int W25Qx_readData(uint32_t addr, void* buf, size_t len)
 {
+    if((addr + len) > FLASH_SIZE)
+        return -EINVAL;
+
     gpio_clearPin(FLASH_CS);
     spiFlash_SendRecv(CMD_READ);             /* Command        */
     spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
@@ -158,8 +172,12 @@ int W25Qx_readData(uint32_t addr, void* buf, size_t len)
 
 int W25Qx_erase(uint32_t addr, size_t size)
 {
-    // Bad: address or size are not sector aligned
-    if(((addr % 0x1000) != 0) || ((size % 0x1000) != 0))
+    // Invalid address or size
+    if((addr + size) > FLASH_SIZE)
+        return -EINVAL;
+
+    // Addr or size not aligned to sector size
+    if(((addr % SECT_SIZE) != 0) || ((size % SECT_SIZE) != 0))
         return -EINVAL;
 
     gpio_clearPin(FLASH_CS);
@@ -182,8 +200,8 @@ int W25Qx_erase(uint32_t addr, size_t size)
         if(ret < 0)
             break;
 
-        size -= 0x1000;
-        addr += 0x1000;
+        size -= SECT_SIZE;
+        addr += SECT_SIZE;
     }
 
     return ret;
@@ -213,12 +231,12 @@ bool W25Qx_eraseChip()
 
 ssize_t W25Qx_writePage(uint32_t addr, const void* buf, size_t len)
 {
-    /* Keep 256-byte boundary to avoid wrap-around when writing */
-    size_t addrRange = addr & 0x0000FF;
+    /* Keep page boundary to avoid wrap-around when writing */
+    size_t addrRange = addr & (PAGE_SIZE - 1);
     size_t writeLen  = len;
-    if((addrRange + len) > 0x100)
+    if((addrRange + len) > PAGE_SIZE)
     {
-        writeLen = 0x100 - addrRange;
+        writeLen = PAGE_SIZE - addrRange;
     }
 
     gpio_clearPin(FLASH_CS);
@@ -253,15 +271,16 @@ ssize_t W25Qx_writePage(uint32_t addr, const void* buf, size_t len)
 
 int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
 {
-    static const uint16_t pageSize = 256;
+    if((addr + len) > FLASH_SIZE)
+        return -EINVAL;
 
     while(len > 0)
     {
         size_t toWrite = len;
 
         // Maximum single-shot write lenght is one page
-        if(toWrite >= pageSize)
-            toWrite = pageSize;
+        if(toWrite >= PAGE_SIZE)
+            toWrite = PAGE_SIZE;
 
         ssize_t written = W25Qx_writePage(addr, buf, toWrite);
         if(written < 0)
@@ -274,3 +293,25 @@ int W25Qx_writeData(uint32_t addr, const void *buf, size_t len)
 
     return 0;
 }
+
+static const struct bd_info W25Qx_info =
+{
+    .type        = BD_FLASH,
+    .page_count  = FLASH_SIZE/PAGE_SIZE,
+    .page_size   = PAGE_SIZE,
+    .page_cycles = 100000
+};
+
+static const struct bd_driver_api W25Qx_api =
+{
+    .read  = W25Qx_readData,
+    .write = W25Qx_writeData,
+    .erase = W25Qx_erase,
+    .sync  = NULL
+};
+
+const struct blockDevice W25Qx_bd =
+{
+    .info = &W25Qx_info,
+    .api  = &W25Qx_api
+};
