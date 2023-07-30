@@ -21,6 +21,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <hwconfig.h>
+#include <string.h>
 
 // Display is monochromatic, one bit per pixel
 #define FB_SIZE ((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 + 1)

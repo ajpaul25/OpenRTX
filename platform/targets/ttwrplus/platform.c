@@ -20,6 +20,18 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 
+#include <zephyr/drivers/gpio.h>
+
+/*
+ * Get buttons devicetree object to access PTT and rotary encoder
+ */
+#define BUTTON_PTT_NODE	DT_NODELABEL(button_ptt)
+static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
+#define ENCODER_A_NODE	DT_NODELABEL(encoder_a)
+static const struct gpio_dt_spec encoder_a = GPIO_DT_SPEC_GET_OR(ENCODER_A_NODE, gpios, {0});
+#define ENCODER_B_NODE	DT_NODELABEL(encoder_b)
+static const struct gpio_dt_spec encoder_b = GPIO_DT_SPEC_GET_OR(ENCODER_B_NODE, gpios, {0});
+
 static const hwInfo_t hwInfo =
 {
     .uhf_maxFreq = 430,
@@ -31,6 +43,35 @@ static const hwInfo_t hwInfo =
 
 void platform_init()
 {
+  int ret = 0;
+  // Setup GPIO for PTT and rotary encoder
+	if (!gpio_is_ready_dt(&button_ptt)) {
+		printk("Error: button device %s is not ready\n",
+		       button_ptt.port->name);
+	}
+	ret = gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
+	if (ret != 0) {
+		printk("Error %d: failed to configure %s pin %d\n",
+		       ret, button_ptt.port->name, button_ptt.pin);
+	}
+	if (!gpio_is_ready_dt(&encoder_a)) {
+		printk("Error: button device %s is not ready\n",
+		       encoder_a.port->name);
+	}
+	ret = gpio_pin_configure_dt(&encoder_a, GPIO_INPUT);
+	if (ret != 0) {
+		printk("Error %d: failed to configure %s pin %d\n",
+		       ret, encoder_a.port->name, encoder_a.pin);
+	}
+	if (!gpio_is_ready_dt(&encoder_b)) {
+		printk("Error: button device %s is not ready\n",
+		       encoder_b.port->name);
+	}
+	ret = gpio_pin_configure_dt(&encoder_b, GPIO_INPUT);
+	if (ret != 0) {
+		printk("Error %d: failed to configure %s pin %d\n",
+		       ret, encoder_b.port->name, encoder_b.pin);
+	}
 }
 
 void platform_terminate()
@@ -54,12 +95,15 @@ uint8_t platform_getVolumeLevel()
 
 int8_t platform_getChSelector()
 {
-    return 0;
+    // Rotary encoder on T-TWR Plus has 2 bits and uses gray encoding
+    static const uint8_t grayEncoding[] = { 0, 1, 3, 2 };
+		int pos = gpio_pin_get_dt(&encoder_a) | gpio_pin_get_dt(&encoder_b) << 1;
+    return grayEncoding[pos];
 }
 
 bool platform_getPttStatus()
 {
-    return false;
+    return gpio_pin_get_dt(&button_ptt);
 }
 
 bool platform_pwrButtonStatus()
