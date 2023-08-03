@@ -72,7 +72,7 @@ uint8_t platform_getVolumeLevel()
     return ((uint8_t) level);
 }
 
-int8_t platform_getChSelector()
+uint8_t platform_getChSelector()
 {
     return emulator_state.chSelector;
 }

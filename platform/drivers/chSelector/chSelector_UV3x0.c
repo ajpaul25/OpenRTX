@@ -95,7 +95,7 @@ void chSelector_terminate()
 /*
  * This function is defined in platform.h
  */
-int8_t platform_getChSelector()
+uint8_t platform_getChSelector()
 {
     /*
      * The knob_pos variable is set in the EXTI15_10 interrupt handler

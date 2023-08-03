@@ -21,16 +21,18 @@
 #include <hwconfig.h>
 
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/sensor.h>
 
 /*
- * Get buttons devicetree object to access PTT and rotary encoder
+ * Get buttons devicetree object to access PTT button
  */
 #define BUTTON_PTT_NODE	DT_NODELABEL(button_ptt)
 static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
-#define ENCODER_A_NODE	DT_NODELABEL(encoder_a)
-static const struct gpio_dt_spec encoder_a = GPIO_DT_SPEC_GET_OR(ENCODER_A_NODE, gpios, {0});
-#define ENCODER_B_NODE	DT_NODELABEL(encoder_b)
-static const struct gpio_dt_spec encoder_b = GPIO_DT_SPEC_GET_OR(ENCODER_B_NODE, gpios, {0});
+
+/*
+ * Rotary encoder is read using hardware pulse counter configured as quadrature decoder
+ */
+static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 
 static const hwInfo_t hwInfo =
 {
@@ -43,35 +45,22 @@ static const hwInfo_t hwInfo =
 
 void platform_init()
 {
-  int ret = 0;
-  // Setup GPIO for PTT and rotary encoder
-	if (!gpio_is_ready_dt(&button_ptt)) {
-		printk("Error: button device %s is not ready\n",
-		       button_ptt.port->name);
-	}
-	ret = gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
-	if (ret != 0) {
-		printk("Error %d: failed to configure %s pin %d\n",
-		       ret, button_ptt.port->name, button_ptt.pin);
-	}
-	if (!gpio_is_ready_dt(&encoder_a)) {
-		printk("Error: button device %s is not ready\n",
-		       encoder_a.port->name);
-	}
-	ret = gpio_pin_configure_dt(&encoder_a, GPIO_INPUT);
-	if (ret != 0) {
-		printk("Error %d: failed to configure %s pin %d\n",
-		       ret, encoder_a.port->name, encoder_a.pin);
-	}
-	if (!gpio_is_ready_dt(&encoder_b)) {
-		printk("Error: button device %s is not ready\n",
-		       encoder_b.port->name);
-	}
-	ret = gpio_pin_configure_dt(&encoder_b, GPIO_INPUT);
-	if (ret != 0) {
-		printk("Error %d: failed to configure %s pin %d\n",
-		       ret, encoder_b.port->name, encoder_b.pin);
-	}
+    int ret = 0;
+    // Setup GPIO for PTT and rotary encoder
+    if (!gpio_is_ready_dt(&button_ptt)) {
+        printk("Error: button device %s is not ready\n",
+               button_ptt.port->name);
+    }
+    ret = gpio_pin_configure_dt(&button_ptt, GPIO_INPUT);
+    if (ret != 0) {
+        printk("Error %d: failed to configure %s pin %d\n",
+               ret, button_ptt.port->name, button_ptt.pin);
+    }
+    // Rotary encoder is read using hardware pulse counter
+    if (!device_is_ready(qdec_dev)) {
+        printk("Qdec device is not ready\n");
+        return 0;
+    }
 }
 
 void platform_terminate()
@@ -93,12 +82,20 @@ uint8_t platform_getVolumeLevel()
     return 0;
 }
 
-int8_t platform_getChSelector()
+uint8_t platform_getChSelector()
 {
-    // Rotary encoder on T-TWR Plus has 2 bits and uses gray encoding
-    static const uint8_t grayEncoding[] = { 0, 1, 3, 2 };
-		int pos = gpio_pin_get_dt(&encoder_a) | gpio_pin_get_dt(&encoder_b) << 1;
-    return grayEncoding[pos];
+    struct sensor_value val;
+    int rc = sensor_sample_fetch(qdec_dev);
+    if (rc != 0) {
+        printk("Failed to fetch sample (%d)\n", rc);
+        return 0;
+    }
+    rc = sensor_channel_get(qdec_dev, SENSOR_CHAN_ROTATION, &val);
+    if (rc != 0) {
+        printk("Failed to get data (%d)\n", rc);
+        return 0;
+    }
+    return (val.val1 * (int32_t) 255) / 360 % 255;
 }
 
 bool platform_getPttStatus()
@@ -128,6 +125,7 @@ void platform_beepStart(uint16_t freq)
 
 void platform_beepStop()
 {
+    ;
 }
 
 const hwInfo_t *platform_getHwInfo()

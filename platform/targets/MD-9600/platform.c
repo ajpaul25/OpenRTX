@@ -239,4 +239,4 @@ const hwInfo_t *platform_getHwInfo()
  * NOTE: implementation of this API function is provided in
  * platform/drivers/chSelector/chSelector_MD9600.c
  */
-// int8_t platform_getChSelector()
+// uint8_t platform_getChSelector()

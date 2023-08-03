@@ -29,7 +29,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/input/input.h>
 
-static int8_t old_pos = 0;
+static uint8_t old_pos = 0;
 keyboard_t keys = 0;
 
 static const struct device *const buttons_dev = DEVICE_DT_GET(DT_NODELABEL(buttons));
@@ -64,19 +64,17 @@ void kbd_terminate()
 keyboard_t kbd_getKeys()
 {
     /* Read rotary encoder to send KNOB_LEFT and KNOB_RIGHT events */
-    int8_t new_pos = platform_getChSelector();
+    int16_t new_pos = platform_getChSelector();
+    keys &= ~KNOB_LEFT;
+    keys &= ~KNOB_RIGHT;
     if (old_pos != new_pos)
     {
-        int8_t diff = new_pos - old_pos;
-        if (diff == 3 || (diff != -3 && diff < 0))
+        // Handle overflow case
+        if ((new_pos == 0 && old_pos == 255) || new_pos > old_pos)
             keys |= KNOB_LEFT;
-        else if (diff == -3 || diff > 0)
+        else
             keys |= KNOB_RIGHT;
         old_pos = new_pos;
-    } else {
-        keys &= ~KNOB_LEFT;
-        keys &= ~KNOB_RIGHT;
     }
-
     return keys;
 }

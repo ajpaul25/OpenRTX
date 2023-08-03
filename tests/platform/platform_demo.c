@@ -39,7 +39,7 @@ void platform_test()
     float vBat = platform_getVbat();
     float micLevel = platform_getMicLevel();
     float volumeLevel = platform_getVolumeLevel();
-    uint8_t currentCh = platform_getChSelector();
+    int16_t currentCh = platform_getChSelector();
     bool ptt = platform_getPttStatus();
     gfx_print(pos_line2, FONT_SIZE_1, TEXT_ALIGN_LEFT, 
               color_white, "bat:%.2f mic:%.2f", vBat, micLevel);

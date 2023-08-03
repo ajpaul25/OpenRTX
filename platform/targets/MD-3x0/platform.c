@@ -111,7 +111,7 @@ uint8_t platform_getVolumeLevel()
     return ((uint8_t) (level >> 8));
 }
 
-int8_t platform_getChSelector()
+uint8_t platform_getChSelector()
 {
     static const uint8_t rsPositions[] = { 11, 14, 10, 15, 6, 3, 7, 2, 12, 13,
                                            9, 16, 5, 4, 8, 1 };
