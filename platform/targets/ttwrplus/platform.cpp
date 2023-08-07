@@ -24,6 +24,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/uart.h>
 
 /*
  * I2C is needed to configure the PMU, check status in devicetree
@@ -36,6 +37,32 @@
 
 static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
 
+/*
+ * Define radio node to control the SA868
+ */
+#if DT_NODE_HAS_STATUS(DT_ALIAS(radio), okay)
+#define UART_RADIO_DEV_NODE DT_ALIAS(radio)
+#else
+#error "Please select the correct radio UART device"
+#endif
+
+#define SA8X8_MSG_SIZE 32
+
+K_MSGQ_DEFINE(uart_msgq, SA8X8_MSG_SIZE, 10, 4);
+
+/* receive buffer used in UART ISR callback */
+static char rx_buf[SA8X8_MSG_SIZE];
+static uint16_t rx_buf_pos;
+
+static const struct device *const radio_dev = DEVICE_DT_GET(UART_RADIO_DEV_NODE);
+
+#define RADIO_PDN_NODE DT_ALIAS(radio_pdn)
+
+static const struct gpio_dt_spec radio_pdn = GPIO_DT_SPEC_GET(RADIO_PDN_NODE, gpios);
+
+/*
+ * PMU is controlled through the XPowersLib external library
+ */
 #define XPOWERS_CHIP_AXP2101
 #include <XPowersLib.h>
 
@@ -46,7 +73,7 @@ static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
 static const struct gpio_dt_spec button_ptt = GPIO_DT_SPEC_GET_OR(BUTTON_PTT_NODE, gpios, {0});
 
 /*
- * Setup PMU to power SA868, LED and GPS
+ * Initialize PMU to power SA868, LED and GPS
  */
 static XPowersPMU PMU;
 
@@ -64,17 +91,17 @@ static const hwInfo_t hwInfo =
     .hw_version  = 0,
 
     ._unused     = 0,
-    .uhf_band    = 1,
-    .vhf_band    = 0,
+    .uhf_band    = 0,
+    .vhf_band    = 1,
 
-    .uhf_maxFreq = 430,
-    .uhf_minFreq = 440,
+    .uhf_maxFreq = 480,
+    .uhf_minFreq = 400,
 
-    .vhf_maxFreq = 0,
-    .vhf_minFreq = 0,
+    .vhf_maxFreq = 174,
+    .vhf_minFreq = 134,
 };
 
-int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
+int pmu_registerReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
 {
     // Only single-byte reads are supported
     if (len != 1)
@@ -82,7 +109,7 @@ int pmu_register_read(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t l
     return i2c_reg_read_byte(i2c_dev, devAddr, regAddr, data);
 }
 
-int pmu_register_write_byte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
+int pmu_registerWriteByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
 {
     // Only single-byte writes are supported
     if (len != 1)
@@ -90,9 +117,9 @@ int pmu_register_write_byte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uin
     return i2c_reg_write_byte(i2c_dev, devAddr, regAddr, *data);
 }
 
-void setupPower()
+void pmu_init()
 {
-    bool result = PMU.begin(AXP2101_SLAVE_ADDRESS, pmu_register_read, pmu_register_write_byte);
+    bool result = PMU.begin(AXP2101_SLAVE_ADDRESS, pmu_registerReadByte, pmu_registerWriteByte);
     if (result == false) {
         while (1) {
             printk("PMU is not online...");
@@ -292,8 +319,7 @@ void setupPower()
     PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V);
 
     // Disable the PMU long press shutdown function
-    PMU.disableLongPressShutdown();
-
+    //PMU.disableLongPressShutdown();
 
     // Get charging target current
     const uint16_t currTable[] = {
@@ -312,10 +338,86 @@ void setupPower()
 
 }
 
+void radio_serialCb(const struct device *dev, void *user_data)
+{
+	uint8_t c;
+
+	if (!uart_irq_update(radio_dev)) {
+		return;
+	}
+
+	if (!uart_irq_rx_ready(radio_dev)) {
+		return;
+	}
+
+	/* read until FIFO empty */
+	while (uart_fifo_read(radio_dev, &c, 1) == 1) {
+		if ((c == '\n' || c == '\r') && rx_buf_pos > 0) {
+			/* terminate string */
+			rx_buf[rx_buf_pos] = '\0';
+
+			/* if queue is full, message is silently dropped */
+			k_msgq_put(&uart_msgq, &rx_buf, K_NO_WAIT);
+
+			/* reset the buffer (it was copied to the msgq) */
+			rx_buf_pos = 0;
+		} else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
+			rx_buf[rx_buf_pos++] = c;
+		}
+		/* else: characters beyond buffer size are dropped */
+	}
+}
+
+void print_uart(char *buf)
+{
+	int msg_len = strlen(buf);
+
+	for (int i = 0; i < msg_len; i++) {
+		uart_poll_out(radio_dev, buf[i]);
+	}
+}
+
+void radio_init()
+{
+    int ret;
+
+    // Initialize GPIO for SA868S power down
+    if (!gpio_is_ready_dt(&radio_pdn)) {
+        printk("Error: radio device %s is not ready\n",
+               radio_pdn.port->name);
+    }
+
+    ret = gpio_pin_configure_dt(&radio_pdn, GPIO_OUTPUT);
+    if (ret != 0) {
+        printk("Error %d: failed to configure %s pin %d\n", ret, radio_pdn.port->name, radio_pdn.pin);
+    }
+
+    if (!device_is_ready(radio_dev)) {
+        printk("UART device not found!\n");
+        return;
+    }
+
+    ret = uart_irq_callback_user_data_set(radio_dev, serial_cb, NULL);
+
+    if (ret < 0) {
+        if (ret == -ENOTSUP) {
+            printk("Interrupt-driven UART support not enabled\n");
+        } else if (ret == -ENOSYS) {
+            printk("UART device does not support interrupt-driven API\n");
+        } else {
+            printk("Error setting UART callback: %d\n", ret);
+        }
+
+        return;
+    }
+
+    uart_irq_rx_enable(radio_dev);
+}
+
 void platform_init()
 {
     int ret = 0;
-    // Setup GPIO for PTT and rotary encoder
+    // Initialize GPIO for PTT and rotary encoder
     if (!gpio_is_ready_dt(&button_ptt)) {
         printk("Error: button device %s is not ready\n",
                button_ptt.port->name);
@@ -331,13 +433,37 @@ void platform_init()
     }
     // Configure I2C
     if (!device_is_ready(i2c_dev)) {
-		printk("I2C device is not ready\n");
+        printk("I2C device is not ready\n");
     }
     if (i2c_configure(i2c_dev, i2c_cfg)) {
-		printk("I2C config failed\n");
+        printk("I2C config failed\n");
     }
-    // Setup PMU
-    setupPower();
+    // Initialize PMU
+    pmu_init();
+
+    // Initialize SA8x8
+    radio_init();
+
+    ret = gpio_pin_toggle_dt(&radio_pdn);
+    if (ret != 0) {
+        printk("Failed to toggle radio power down");
+        return;
+    }
+
+    char tx_buf[SA8X8_MSG_SIZE];
+
+    while (1) {
+	printk("-> AT+VERSION\n");
+	print_uart("AT+VERSION\r\n");
+
+	/* indefinitely wait for input from the user */
+	while (k_msgq_get(&uart_msgq, &tx_buf, K_FOREVER) == 0) {
+		printk("<- ");
+		printk(tx_buf);
+		printk("\n");
+	}
+	k_sleep(K_MSEC(2000));
+    }
 }
 
 void platform_terminate()
