@@ -194,6 +194,10 @@ const char *info_items[] =
     "Hw Version"
 };
 
+size_t info_n_extra_entries = 0;
+
+info_extra_entry info_extra_entries[MAX_EXTRA_ENTRIES];
+
 const char *authors[] =
 {
     "Niccolo' IU2KIN",
@@ -1774,9 +1778,9 @@ void ui_updateFSM(bool *sync_rtx)
             // Info menu screen
             case MENU_INFO:
                 if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT)
-                    _ui_menuUp(info_num);
+                    _ui_menuUp(info_num + info_n_extra_entries);
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
-                    _ui_menuDown(info_num);
+                    _ui_menuDown(info_num + info_n_extra_entries);
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_TOP);
                 break;
@@ -2271,6 +2275,12 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data)
     evQueue_wrPos = newHead;
 
     return true;
+}
+
+void ui_registerInfoExtraEntry(const char *key, char *(*value_cb)())
+{
+    info_extra_entry entry = {key, value_cb};
+    info_extra_entries[info_n_extra_entries++] = entry;
 }
 
 void ui_terminate()

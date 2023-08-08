@@ -20,6 +20,11 @@
 #ifndef UI_H
 #define UI_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -68,9 +73,22 @@ bool ui_updateGUI();
  */
 bool ui_pushEvent(const uint8_t type, const uint32_t data);
 
+/*
+ * This function registers a new entry in the info menu, the entry
+ * takes the form of a key-value pair.
+ * @param key: the key is a static string and cannot be changed
+ * @param value_cb: this callback is called to generate the value, Which
+ * should be re-generated everytime the info menu is rendered.
+ */
+void ui_registerInfoExtraEntry(const char *key, char *(*value_cb)());
+
 /**
  * This function terminates the User Interface.
  */
 void ui_terminate();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UI_H */

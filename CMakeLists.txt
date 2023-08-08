@@ -63,6 +63,7 @@ target_include_directories(app
   PRIVATE
 
     openrtx/include
+    openrtx/include/ui
     openrtx/include/rtx
     openrtx/include/core
     openrtx/include/calibration

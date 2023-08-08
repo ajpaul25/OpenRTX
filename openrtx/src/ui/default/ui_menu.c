@@ -402,51 +402,65 @@ int _ui_getBackupRestoreEntryName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 {
-    if(index >= info_num) return -1;
-    snprintf(buf, max_len, "%s", info_items[index]);
+    if(index < info_num)
+        snprintf(buf, max_len, "%s", info_items[index]);
+    else if (index < info_num + info_n_extra_entries)
+        snprintf(buf, max_len, "%s", info_extra_entries[index - info_num].key);
+    else
+        return -1;
     return 0;
 }
 
 int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     const hwInfo_t* hwinfo = platform_getHwInfo();
-    if(index >= info_num) return -1;
-    switch(index)
+    if(index < info_num)
     {
-        case 0: // Git Version
-            snprintf(buf, max_len, "%s", GIT_VERSION);
-            break;
-        case 1: // Battery voltage
+        switch(index)
         {
-            // Compute integer part and mantissa of voltage value, adding 50mV
-            // to mantissa for rounding to nearest integer
-            uint16_t volt  = (last_state.v_bat + 50) / 1000;
-            uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
-            snprintf(buf, max_len, "%d.%dV", volt, mvolt);
+            case 0: // Git Version
+                snprintf(buf, max_len, "%s", GIT_VERSION);
+                break;
+            case 1: // Battery voltage
+            {
+                // Compute integer part and mantissa of voltage value, adding 50mV
+                // to mantissa for rounding to nearest integer
+                uint16_t volt  = (last_state.v_bat + 50) / 1000;
+                uint16_t mvolt = ((last_state.v_bat - volt * 1000) + 50) / 100;
+                snprintf(buf, max_len, "%d.%dV", volt, mvolt);
+            }
+                break;
+            case 2: // Battery charge
+                snprintf(buf, max_len, "%d%%", last_state.charge);
+                break;
+            case 3: // RSSI
+                snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
+                break;
+            case 4: // Heap usage
+                snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
+                break;
+            case 5: // Band
+                snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
+                break;
+            case 6: // VHF
+                snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
+                break;
+            case 7: // UHF
+                snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
+                break;
+            case 8: // LCD Type
+                snprintf(buf, max_len, "%d", hwinfo->hw_version);
+                break;
         }
-            break;
-        case 2: // Battery charge
-            snprintf(buf, max_len, "%d%%", last_state.charge);
-            break;
-        case 3: // RSSI
-            snprintf(buf, max_len, "%.1fdBm", last_state.rssi);
-            break;
-        case 4: // Heap usage
-            snprintf(buf, max_len, "%dB", getHeapSize() - getCurrentFreeHeap());
-            break;
-        case 5: // Band
-            snprintf(buf, max_len, "%s %s", hwinfo->vhf_band ? currentLanguage->VHF : "", hwinfo->uhf_band ? currentLanguage->UHF : "");
-            break;
-        case 6: // VHF
-            snprintf(buf, max_len, "%d - %d", hwinfo->vhf_minFreq, hwinfo->vhf_maxFreq);
-            break;
-        case 7: // UHF
-            snprintf(buf, max_len, "%d - %d", hwinfo->uhf_minFreq, hwinfo->uhf_maxFreq);
-            break;
-        case 8: // LCD Type
-            snprintf(buf, max_len, "%d", hwinfo->hw_version);
-            break;
     }
+    else if (index < info_num + info_n_extra_entries)
+    {
+        char *value = (info_extra_entries[index - info_num].value_cb)();
+        snprintf(buf, max_len, "%s", value);
+        free(value);
+    }
+    else
+        return -1;
     return 0;
 }
 

@@ -37,6 +37,8 @@
 #define TIMEDATE_DIGITS 10
 // Max number of UI events
 #define MAX_NUM_EVENTS 16
+// Maximum number of extra enties to avoid dynamic allocation
+#define MAX_EXTRA_ENTRIES 2
 
 enum uiScreen
 {
@@ -173,7 +175,7 @@ typedef struct layout_t
 } layout_t;
 
 /**
- * This structs contains state variables internal to the
+ * This struct contains state variables internal to the
  * UI that need to be kept between executions of the UI
  * This state does not need to be saved on device poweroff
  */
@@ -204,6 +206,16 @@ typedef struct ui_state_t
 }
 ui_state_t;
 
+/*
+ * This struct represents an extra items for the info menu list, these extra
+ * items are initialized at runtime and have constant key and on-demand
+ * generated value through the use of a callback.
+ */
+typedef struct {
+    const char *key;
+    char *(*value_cb)();
+} info_extra_entry;
+
 extern layout_t layout;
 // Copy of the radio state
 extern state_t last_state;
@@ -230,5 +242,7 @@ extern const color_t color_black;
 extern const color_t color_grey;
 extern const color_t color_white;
 extern const color_t yellow_fab413;
+extern size_t info_n_extra_entries;
+extern info_extra_entry info_extra_entries[MAX_EXTRA_ENTRIES];
 
 #endif /* UI_DEFAULT_H */
