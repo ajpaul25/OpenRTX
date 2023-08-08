@@ -20,6 +20,7 @@
 #include <interfaces/platform.h>
 #include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <ui.h>
 
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
@@ -340,41 +341,32 @@ void pmu_init()
 
 void radio_serialCb(const struct device *dev, void *user_data)
 {
-	uint8_t c;
+    uint8_t c;
 
-	if (!uart_irq_update(radio_dev)) {
-		return;
-	}
+    if (!uart_irq_update(radio_dev)) {
+        return;
+    }
 
-	if (!uart_irq_rx_ready(radio_dev)) {
-		return;
-	}
+    if (!uart_irq_rx_ready(radio_dev)) {
+        return;
+    }
 
-	/* read until FIFO empty */
-	while (uart_fifo_read(radio_dev, &c, 1) == 1) {
-		if ((c == '\n' || c == '\r') && rx_buf_pos > 0) {
-			/* terminate string */
-			rx_buf[rx_buf_pos] = '\0';
+    /* read until FIFO empty */
+    while (uart_fifo_read(radio_dev, &c, 1) == 1) {
+        if (c == '\n' && rx_buf_pos > 0) {
+            /* terminate string */
+            rx_buf[rx_buf_pos] = '\0';
 
-			/* if queue is full, message is silently dropped */
-			k_msgq_put(&uart_msgq, &rx_buf, K_NO_WAIT);
+            /* if queue is full, message is silently dropped */
+            k_msgq_put(&uart_msgq, &rx_buf, K_NO_WAIT);
 
-			/* reset the buffer (it was copied to the msgq) */
-			rx_buf_pos = 0;
-		} else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
-			rx_buf[rx_buf_pos++] = c;
-		}
-		/* else: characters beyond buffer size are dropped */
-	}
-}
-
-void print_uart(char *buf)
-{
-	int msg_len = strlen(buf);
-
-	for (int i = 0; i < msg_len; i++) {
-		uart_poll_out(radio_dev, buf[i]);
-	}
+            /* reset the buffer (it was copied to the msgq) */
+            rx_buf_pos = 0;
+        } else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
+            rx_buf[rx_buf_pos++] = c;
+        }
+        /* else: characters beyond buffer size are dropped */
+    }
 }
 
 void radio_init()
@@ -397,7 +389,7 @@ void radio_init()
         return;
     }
 
-    ret = uart_irq_callback_user_data_set(radio_dev, serial_cb, NULL);
+    ret = uart_irq_callback_user_data_set(radio_dev, radio_serialCb, NULL);
 
     if (ret < 0) {
         if (ret == -ENOTSUP) {
@@ -412,6 +404,22 @@ void radio_init()
     }
 
     uart_irq_rx_enable(radio_dev);
+}
+
+void print_uart(char *buf)
+{
+    int msg_len = strlen(buf);
+
+    for (uint16_t i = 0; i < msg_len; i++) {
+        uart_poll_out(radio_dev, buf[i]);
+    }
+}
+
+char *radio_getFwVersion() {
+    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
+    print_uart("AT+VERSION\r\n");
+    k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    return tx_buf;
 }
 
 void platform_init()
@@ -450,20 +458,8 @@ void platform_init()
         return;
     }
 
-    char tx_buf[SA8X8_MSG_SIZE];
-
-    while (1) {
-	printk("-> AT+VERSION\n");
-	print_uart("AT+VERSION\r\n");
-
-	/* indefinitely wait for input from the user */
-	while (k_msgq_get(&uart_msgq, &tx_buf, K_FOREVER) == 0) {
-		printk("<- ");
-		printk(tx_buf);
-		printk("\n");
-	}
-	k_sleep(K_MSEC(2000));
-    }
+    // Add SA8x8 FW version to Info menu
+    ui_registerInfoExtraEntry("Radio", radio_getFwVersion);
 }
 
 void platform_terminate()
