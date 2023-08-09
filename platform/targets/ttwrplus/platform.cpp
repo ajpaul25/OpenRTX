@@ -39,29 +39,6 @@
 static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
 
 /*
- * Define radio node to control the SA868
- */
-#if DT_NODE_HAS_STATUS(DT_ALIAS(radio), okay)
-#define UART_RADIO_DEV_NODE DT_ALIAS(radio)
-#else
-#error "Please select the correct radio UART device"
-#endif
-
-#define SA8X8_MSG_SIZE 32
-
-K_MSGQ_DEFINE(uart_msgq, SA8X8_MSG_SIZE, 10, 4);
-
-/* receive buffer used in UART ISR callback */
-static char rx_buf[SA8X8_MSG_SIZE];
-static uint16_t rx_buf_pos;
-
-static const struct device *const radio_dev = DEVICE_DT_GET(UART_RADIO_DEV_NODE);
-
-#define RADIO_PDN_NODE DT_ALIAS(radio_pdn)
-
-static const struct gpio_dt_spec radio_pdn = GPIO_DT_SPEC_GET(RADIO_PDN_NODE, gpios);
-
-/*
  * PMU is controlled through the XPowersLib external library
  */
 #define XPOWERS_CHIP_AXP2101
@@ -339,89 +316,6 @@ void pmu_init()
 
 }
 
-void radio_serialCb(const struct device *dev, void *user_data)
-{
-    uint8_t c;
-
-    if (!uart_irq_update(radio_dev)) {
-        return;
-    }
-
-    if (!uart_irq_rx_ready(radio_dev)) {
-        return;
-    }
-
-    /* read until FIFO empty */
-    while (uart_fifo_read(radio_dev, &c, 1) == 1) {
-        if (c == '\n' && rx_buf_pos > 0) {
-            /* terminate string */
-            rx_buf[rx_buf_pos] = '\0';
-
-            /* if queue is full, message is silently dropped */
-            k_msgq_put(&uart_msgq, &rx_buf, K_NO_WAIT);
-
-            /* reset the buffer (it was copied to the msgq) */
-            rx_buf_pos = 0;
-        } else if (rx_buf_pos < (sizeof(rx_buf) - 1)) {
-            rx_buf[rx_buf_pos++] = c;
-        }
-        /* else: characters beyond buffer size are dropped */
-    }
-}
-
-void radio_init()
-{
-    int ret;
-
-    // Initialize GPIO for SA868S power down
-    if (!gpio_is_ready_dt(&radio_pdn)) {
-        printk("Error: radio device %s is not ready\n",
-               radio_pdn.port->name);
-    }
-
-    ret = gpio_pin_configure_dt(&radio_pdn, GPIO_OUTPUT);
-    if (ret != 0) {
-        printk("Error %d: failed to configure %s pin %d\n", ret, radio_pdn.port->name, radio_pdn.pin);
-    }
-
-    if (!device_is_ready(radio_dev)) {
-        printk("UART device not found!\n");
-        return;
-    }
-
-    ret = uart_irq_callback_user_data_set(radio_dev, radio_serialCb, NULL);
-
-    if (ret < 0) {
-        if (ret == -ENOTSUP) {
-            printk("Interrupt-driven UART support not enabled\n");
-        } else if (ret == -ENOSYS) {
-            printk("UART device does not support interrupt-driven API\n");
-        } else {
-            printk("Error setting UART callback: %d\n", ret);
-        }
-
-        return;
-    }
-
-    uart_irq_rx_enable(radio_dev);
-}
-
-void print_uart(char *buf)
-{
-    int msg_len = strlen(buf);
-
-    for (uint16_t i = 0; i < msg_len; i++) {
-        uart_poll_out(radio_dev, buf[i]);
-    }
-}
-
-char *radio_getFwVersion() {
-    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
-    print_uart("AT+VERSION\r\n");
-    k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
-    return tx_buf;
-}
-
 void platform_init()
 {
     int ret = 0;
@@ -448,18 +342,6 @@ void platform_init()
     }
     // Initialize PMU
     pmu_init();
-
-    // Initialize SA8x8
-    radio_init();
-
-    ret = gpio_pin_toggle_dt(&radio_pdn);
-    if (ret != 0) {
-        printk("Failed to toggle radio power down");
-        return;
-    }
-
-    // Add SA8x8 FW version to Info menu
-    ui_registerInfoExtraEntry("Radio", radio_getFwVersion);
 }
 
 void platform_terminate()

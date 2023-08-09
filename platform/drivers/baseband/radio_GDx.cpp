@@ -147,32 +147,11 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
-    gpio_clearPin(VHF_LNA_EN);
-    gpio_clearPin(UHF_LNA_EN);
-    gpio_clearPin(VHF_PA_EN);
-    gpio_clearPin(UHF_PA_EN);
-    DAC0->DAT[0].DATH = 0;
-    DAC0->DAT[0].DATL = 0;
-
     if(currRxBand == BND_NONE) return;
-
-    // Adjust reference oscillator bias and offset.
-    C6000.writeCfgRegister(0x04, calData.data[currRxBand].mod2Offset);
-    C6000.setModOffset(calData.data[currRxBand].modBias);
 
     // Set frequency and enable AT1846S RX
     at1846s.setFrequency(config->rxFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::RX);
-
-    // Enable RX LNA
-    if(currRxBand == BND_VHF)
-    {
-        gpio_setPin(VHF_LNA_EN);
-    }
-    else
-    {
-        gpio_setPin(UHF_LNA_EN);
-    }
 
     radioStatus = RX;
 
@@ -186,34 +165,11 @@ void radio_enableTx()
 {
     if(config->txDisable == 1) return;
 
-    gpio_clearPin(VHF_LNA_EN);
-    gpio_clearPin(UHF_LNA_EN);
-    gpio_clearPin(VHF_PA_EN);
-    gpio_clearPin(UHF_PA_EN);
-
     if(currTxBand == BND_NONE) return;
-
-    // Adjust reference oscillator bias and offset.
-    C6000.writeCfgRegister(0x04, calData.data[currTxBand].mod2Offset);
-    C6000.setModOffset(calData.data[currTxBand].modBias);
 
     // Set frequency and enable AT1846S TX
     at1846s.setFrequency(config->txFrequency);
     at1846s.setFuncMode(AT1846S_FuncMode::TX);
-
-    // Set APC voltage
-    DAC0->DAT[0].DATH = (apcVoltage >> 8) & 0xFF;
-    DAC0->DAT[0].DATL =  apcVoltage & 0xFF;
-
-    // Enable TX PA
-    if(currTxBand == BND_VHF)
-    {
-        gpio_setPin(VHF_PA_EN);
-    }
-    else
-    {
-        gpio_setPin(UHF_PA_EN);
-    }
 
     if(config->txToneEn)
     {
@@ -225,18 +181,7 @@ void radio_enableTx()
 
 void radio_disableRtx()
 {
-    gpio_clearPin(VHF_LNA_EN);
-    gpio_clearPin(UHF_LNA_EN);
-    gpio_clearPin(VHF_PA_EN);
-    gpio_clearPin(UHF_PA_EN);
-
-    if(radioStatus == TX)
-    {
-        // Set PA drive voltage to 0V
-        DAC0->DAT[0].DATH = 0;
-        DAC0->DAT[0].DATL = 0;
-    }
-
+    // TODO: Turn off PA
     at1846s.disableCtcss();
     at1846s.setFuncMode(AT1846S_FuncMode::OFF);
     radioStatus = OFF;
@@ -269,20 +214,7 @@ void radio_updateConfiguration()
         at1846s.setRssiThresholds(cal->rssi_HighTsh_Wb, cal->rssi_LowTsh_Wb);
     }
 
-    C6000.writeCfgRegister(0x37, cal->digAudioGain);    // DACDATA gain
-
-    uint8_t sqlTresh = 0;
-    if(currRxBand == BND_VHF)
-    {
-        sqlTresh = interpCalParameter(config->rxFrequency, calData.vhfCalPoints,
-                                      cal->analogSqlThresh, 8);
-    }
-    else
-    {
-        sqlTresh = interpCalParameter(config->rxFrequency, calData.uhfCalPoints,
-                                      cal->analogSqlThresh, 8);
-    }
-
+    // TODO: How do we calibrate squelch threshold on this chip? Read ofw caldata?
     at1846s.setAnalogSqlThresh(sqlTresh);
 
     /*
@@ -296,33 +228,6 @@ void radio_updateConfiguration()
     uint8_t mod1Amp  = 0;
     uint8_t txpwr_lo = 0;
     uint8_t txpwr_hi = 0;
-
-    if(currTxBand == BND_VHF)
-    {
-        /* VHF band */
-        txpwr_lo = interpCalParameter(config->txFrequency, calData.vhfCalPoints,
-                                      calData.data[currTxBand].txLowPower, 8);
-
-        txpwr_hi = interpCalParameter(config->txFrequency, calData.vhfCalPoints,
-                                      calData.data[currTxBand].txHighPower, 8);
-
-        mod1Amp = interpCalParameter(config->txFrequency, calData.vhfCalPoints,
-                                     cal->mod1Amplitude, 8);
-    }
-    else
-    {
-        /* UHF band */
-        txpwr_lo = interpCalParameter(config->txFrequency, calData.uhfPwrCalPoints,
-                                      calData.data[currTxBand].txLowPower, 16);
-
-        txpwr_hi = interpCalParameter(config->txFrequency, calData.uhfPwrCalPoints,
-                                      calData.data[currTxBand].txHighPower, 16);
-
-        mod1Amp = interpCalParameter(config->txFrequency, calData.uhfCalPoints,
-                                     cal->mod1Amplitude, 8);
-    }
-
-    C6000.setModAmplitude(0, mod1Amp);
 
     // Calculate APC voltage, constraining output power between 1W and 5W.
     float power = std::max(std::min(config->txPower, 5.0f), 1.0f);
