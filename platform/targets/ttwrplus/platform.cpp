@@ -26,6 +26,7 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/drivers/led_strip.h>
 
 /*
  * I2C is needed to configure the PMU, check status in devicetree
@@ -61,6 +62,14 @@ static XPowersPMU PMU;
 static const struct device *const qdec_dev = DEVICE_DT_GET(DT_ALIAS(qdec0));
 
 static const uint32_t i2c_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_CONTROLLER;
+
+/*
+ * Initialize WS2812C RGB LED
+ */
+#define LED_NODE    DT_ALIAS(led0)
+#define RGB(_r, _g, _b) { .r = (_r), .g = (_g), .b = (_b) }
+struct led_rgb led_color = RGB(0x00, 0x00, 0x00);
+static const struct device *const led_dev = DEVICE_DT_GET(LED_NODE);
 
 static const hwInfo_t hwInfo =
 {
@@ -342,6 +351,14 @@ void platform_init()
     }
     // Initialize PMU
     pmu_init();
+    // Initialize LED
+    if (!device_is_ready(led_dev)) {
+        printk("LED device %s is not ready", led_dev->name);
+    }
+    ret = led_strip_update_rgb(led_dev, &led_color, 1);
+    if (ret) {
+        printk("couldn't update strip: %d", ret);
+    }
 }
 
 void platform_terminate()
@@ -391,12 +408,42 @@ bool platform_pwrButtonStatus()
 
 void platform_ledOn(led_t led)
 {
-    (void) led;
+    int ret = 0;
+    switch(led)
+    {
+        case GREEN:
+            led_color.g = 0xff;
+            break;
+        case RED:
+            led_color.r = 0xff;
+            break;
+        default:
+            break;
+    }
+    ret = led_strip_update_rgb(led_dev, &led_color, 1);
+    if (ret) {
+        printk("couldn't update strip: %d", ret);
+    }
 }
 
 void platform_ledOff(led_t led)
 {
-    (void) led;
+    int ret = 0;
+    switch(led)
+    {
+        case GREEN:
+            led_color.g = 0x00;
+            break;
+        case RED:
+            led_color.r = 0x00;
+            break;
+        default:
+            break;
+    }
+    ret = led_strip_update_rgb(led_dev, &led_color, 1);
+    if (ret) {
+        printk("couldn't update strip: %d", ret);
+    }
 }
 
 void platform_beepStart(uint16_t freq)
