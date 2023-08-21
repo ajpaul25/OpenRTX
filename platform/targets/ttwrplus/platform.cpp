@@ -351,7 +351,7 @@ void platform_init()
     }
     // Initialize PMU
     pmu_init();
-    // Initialize LED
+    // Initialize LED to off state
     if (!device_is_ready(led_dev)) {
         printk("LED device %s is not ready", led_dev->name);
     }

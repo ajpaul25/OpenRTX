@@ -53,7 +53,7 @@
     };
 
     buttons: buttons {
-        compatible = "zephyr,gpio-keys";
+        compatible = "gpio-keys";
 
         button_boot: button_0 {
             gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
@@ -119,11 +119,12 @@
 };
 
 &spi3 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	status = "okay";
-	pinctrl-0 = <&spim3_default>;
-	pinctrl-names = "default";
+    #address-cells = <1>;
+    #size-cells = <0>;
+    line-idle-low; /* Workaround to have low signal for latching */
+    status = "okay";
+    pinctrl-0 = <&spim3_default>;
+    pinctrl-names = "default";
     ws2812c: ws2812@0 {
             compatible = "worldsemi,ws2812-spi";
 
@@ -131,7 +132,7 @@
             reg = <0x0>; /* ignored, but necessary for SPI bindings */
             spi-max-frequency = <6400000>;
 
-            /* WS2812 */
+            /* WS2812C */
             chain-length = <1>; /* arbitrary; change at will */
             spi-cpha;
             spi-one-frame = <0xf0>; /* 11110000: 625 ns high and 625 ns low */
@@ -139,6 +140,7 @@
             color-mapping = <LED_COLOR_ID_GREEN
                              LED_COLOR_ID_RED
                              LED_COLOR_ID_BLUE>;
+            reset-delay = <280>; /* > 280us by WS2812C datasheet */
     };
 };
 

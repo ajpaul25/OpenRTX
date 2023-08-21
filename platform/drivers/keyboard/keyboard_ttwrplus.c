@@ -48,7 +48,7 @@ static void gpio_keys_cb_handler(struct input_event *evt)
             break;
     }
 }
-INPUT_LISTENER_CB_DEFINE(buttons_dev, gpio_keys_cb_handler);
+INPUT_CALLBACK_DEFINE(buttons_dev, gpio_keys_cb_handler);
 
 void kbd_init()
 {
