@@ -39,7 +39,7 @@ static void gpio_keys_cb_handler(struct input_event *evt)
     // Map betweek Zephyr keys and OpenRTX keys
     switch (evt->code) {
         case INPUT_KEY_VOLUMEDOWN:
-            keys = (evt->value) ? keys | KEY_DOWN : keys & ~KEY_DOWN;
+            keys = (evt->value) ? keys | KEY_MONI : keys & ~KEY_MONI;
             break;
         case INPUT_BTN_START:
             keys = (evt->value) ? keys | KEY_ENTER : keys & ~KEY_ENTER;
