@@ -34,7 +34,7 @@
 pthread_mutex_t adc_mutex;
 gdxCalibration_t calibration;
 
-static const hwInfo_t hwInfo =
+static hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 174,
     .vhf_minFreq = 136,
@@ -191,7 +191,7 @@ void platform_beepStop()
     /* TODO */
 }
 
-const hwInfo_t *platform_getHwInfo()
+hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }

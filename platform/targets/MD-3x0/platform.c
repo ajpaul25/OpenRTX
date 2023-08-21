@@ -203,7 +203,7 @@ void platform_setTime(datetime_t t)
     rtc_setTime(t);
 }
 
-const hwInfo_t *platform_getHwInfo()
+hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }

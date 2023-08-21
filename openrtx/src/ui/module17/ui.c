@@ -370,7 +370,7 @@ void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 bool _ui_freq_check_limits(freq_t freq)
 {
     bool valid = false;
-    const hwInfo_t* hwinfo = platform_getHwInfo();
+    hwInfo_t* hwinfo = platform_getHwInfo();
     if(hwinfo->vhf_band)
     {
         // hwInfo_t frequencies are in MHz

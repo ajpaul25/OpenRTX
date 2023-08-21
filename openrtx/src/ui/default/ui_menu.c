@@ -414,7 +414,7 @@ int _ui_getInfoEntryName(char *buf, uint8_t max_len, uint8_t index)
 
 int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
 {
-    const hwInfo_t* hwinfo = platform_getHwInfo();
+    hwInfo_t* hwinfo = platform_getHwInfo();
     if(index < info_num)
     {
         switch(index)

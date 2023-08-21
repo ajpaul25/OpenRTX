@@ -34,7 +34,7 @@
 #include <chSelector.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
-static const hwInfo_t hwInfo
+static hwInfo_t hwInfo
 {
     .vhf_maxFreq = 174,
     .vhf_minFreq = 136,
@@ -230,7 +230,7 @@ void platform_setTime(datetime_t t)
     rtc_setTime(t);
 }
 
-const hwInfo_t *platform_getHwInfo()
+hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }

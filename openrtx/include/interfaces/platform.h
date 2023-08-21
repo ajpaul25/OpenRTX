@@ -165,7 +165,7 @@ void platform_setTime(datetime_t t);
  * pointer!
  * @return pointer to device's hardware information.
  */
-const hwInfo_t *platform_getHwInfo();
+hwInfo_t *platform_getHwInfo();
 
 #ifdef __cplusplus
 }

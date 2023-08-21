@@ -34,7 +34,7 @@ channel_t cps_getDefaultChannel()
     channel.power     = 100;    // 1W, P = 10dBm + n*0.2dBm, we store n
 
     // Set initial frequency based on supported bands
-    const hwInfo_t* hwinfo  = platform_getHwInfo();
+    hwInfo_t* hwinfo  = platform_getHwInfo();
     if(hwinfo->uhf_band)
     {
         channel.rx_frequency = 430000000;

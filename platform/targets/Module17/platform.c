@@ -185,7 +185,7 @@ void platform_beepStop()
     /* TODO */
 }
 
-const hwInfo_t *platform_getHwInfo()
+hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }

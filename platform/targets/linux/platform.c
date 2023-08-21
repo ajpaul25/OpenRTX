@@ -21,7 +21,7 @@
 #include "emulator.h"
 
 
-static const hwInfo_t hwInfo =
+static hwInfo_t hwInfo =
 {
     .vhf_maxFreq = 174,
     .vhf_minFreq = 136,
@@ -143,7 +143,7 @@ void platform_setTime(datetime_t t)
     printf("rtc_setTime(t)\n");
 }
 
-const hwInfo_t *platform_getHwInfo()
+hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }

@@ -80,7 +80,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     // Invert TX phase for all MDx models.
     // Invert RX phase for MD-3x0 VHF and MD-UV3x0 radios.
     //
-    const hwInfo_t* hwinfo = platform_getHwInfo();
+    hwInfo_t* hwinfo = platform_getHwInfo();
     invertTxPhase = true;
     if(hwinfo->vhf_band == 1)
         invertRxPhase = true;

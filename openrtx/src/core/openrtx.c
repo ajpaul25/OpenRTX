@@ -36,17 +36,21 @@
 
 extern void *main_thread(void *arg);
 
+/* Mutex for concurrent access to RTX state variable */
+pthread_mutex_t rtx_mutex;
+
 void openrtx_init()
 {
     state.devStatus = STARTUP;
 
-    platform_init();    // Initialize low-level platform drivers
-    state_init();       // Initialize radio state
+    platform_init();      // Initialize low-level platform drivers
+    rtx_init(&rtx_mutex); // Initialize radio driver
+    state_init();         // Initialize radio state
 
-    gfx_init();         // Initialize display and graphics driver
-    kbd_init();         // Initialize keyboard driver
-    ui_init();          // Initialize user interface
-    vp_init();          // Initialize voice prompts
+    gfx_init();           // Initialize display and graphics driver
+    kbd_init();           // Initialize keyboard driver
+    ui_init();            // Initialize user interface
+    vp_init();            // Initialize voice prompts
     #ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
     #endif

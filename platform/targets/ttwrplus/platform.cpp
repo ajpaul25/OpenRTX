@@ -71,7 +71,7 @@ static const uint32_t i2c_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_CONTROL
 struct led_rgb led_color = RGB(0x00, 0x00, 0x00);
 static const struct device *const led_dev = DEVICE_DT_GET(LED_NODE);
 
-static const hwInfo_t hwInfo =
+static hwInfo_t hwInfo =
 {
     .name        = "ttwrplus",
 
@@ -456,7 +456,7 @@ void platform_beepStop()
     ;
 }
 
-const hwInfo_t *platform_getHwInfo()
+hwInfo_t *platform_getHwInfo()
 {
     return &hwInfo;
 }

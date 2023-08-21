@@ -40,9 +40,8 @@
 #endif
 #include <voicePrompts.h>
 
-
 /* Mutex for concurrent access to RTX state variable */
-pthread_mutex_t rtx_mutex;
+extern pthread_mutex_t rtx_mutex;
 
 /**
  * \internal Thread managing user input and UI
@@ -170,8 +169,6 @@ void *main_thread(void *arg)
 void *rtx_threadFunc(void *arg)
 {
     (void) arg;
-
-    rtx_init(&rtx_mutex);
 
     while(state.devStatus == RUNNING)
     {

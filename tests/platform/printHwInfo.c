@@ -26,7 +26,7 @@ int main()
 {
     platform_init();
 
-    const hwInfo_t *info = platform_getHwInfo();
+    hwInfo_t *info = platform_getHwInfo();
 
     while(1)
     {
