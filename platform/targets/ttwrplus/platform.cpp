@@ -79,7 +79,7 @@ static hwInfo_t hwInfo =
 
     ._unused     = 0,
     .uhf_band    = 0,
-    .vhf_band    = 1,
+    .vhf_band    = 0,
 
     .uhf_maxFreq = 480,
     .uhf_minFreq = 400,

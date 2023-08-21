@@ -24,9 +24,11 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <algorithm>
 
 #include "interfaces/delays.h"
+#include "interfaces/platform.h"
 #include "interfaces/radio.h"
 #include "AT1846S.h"
 #include "radioUtils.h"
@@ -122,6 +124,35 @@ char *radio_getFwVersion()
     return tx_buf;
 }
 
+char *radio_getShortFwVersion()
+{
+    char *fwVersionStr = radio_getFwVersion();
+    uint8_t major = 0, minor = 0, patch = 0, release = 0;
+    sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
+    sprintf(fwVersionStr, "v%hhu.%hhu.%hhu.r%hhu", major, minor, patch, release);
+    return fwVersionStr;
+}
+
+char *radio_getModel()
+{
+    char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
+    radio_uartPrint("AT+MODEL\r\n");
+    k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    return tx_buf;
+}
+
+enum Band radio_getBand()
+{
+    enum Band band = BND_NONE;
+    char *tx_buf = radio_getModel();
+    if (!strncmp(tx_buf, "SA868S-VHF\r", SA8X8_MSG_SIZE))
+        band = BND_VHF;
+    else if (!strncmp(tx_buf, "SA868S-UHF\r", SA8X8_MSG_SIZE))
+        band = BND_UHF;
+    free(tx_buf);
+    return band;
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config      = rtxState;
@@ -167,7 +198,36 @@ void radio_init(const rtxStatus_t *rtxState)
     }
 
     // Add SA8x8 FW version to Info menu
-    ui_registerInfoExtraEntry("Radio", radio_getFwVersion);
+    ui_registerInfoExtraEntry("Radio", radio_getModel);
+    ui_registerInfoExtraEntry("Radio FW", radio_getShortFwVersion);
+
+    // A small delay is needed to have SA8x8 ready to serve commands
+    delayMs(100);
+
+    // Retrieve hardware configuration and update device descriptor
+    hwInfo_t *hwInfo = platform_getHwInfo();
+    switch (radio_getBand())
+    {
+        case BND_VHF:
+            hwInfo->vhf_band = 1;
+            break;
+        case BND_UHF:
+            hwInfo->uhf_band = 1;
+            break;
+        case BND_NONE:
+            break;
+    };
+
+    // Check for minimum supported firmware version.
+    char *fwVersionStr = radio_getFwVersion();
+    uint8_t major = 0, minor = 0, patch = 0, release = 0;
+    sscanf(fwVersionStr, "sa8x8-fw/v%hhu.%hhu.%hhu.r%hhu", &major, &minor, &patch, &release);
+    if (major < 1 || (major == 1 && minor < 1) || (major == 1 && minor == 1 && patch == 0 && release < 14))
+    {
+        printk("Error: unsupported baseband firmware, please update!\n");
+        return;
+    }
+    free(fwVersionStr);
 
     // TODO: Implement audio paths configuration
 
@@ -253,8 +313,6 @@ void radio_enableRx()
 
 void radio_enableTx()
 {
-    // TODO; Do not enable Tx until proven to be safe
-    return;
     if(config->txDisable == 1) return;
 
     at1846s.setFrequency(config->txFrequency);
