@@ -367,7 +367,7 @@ void platform_terminate()
 
 uint16_t platform_getVbat()
 {
-    return 0;
+    return PMU.isBatteryConnect() ? PMU.getBattVoltage() : 0;
 }
 
 uint8_t platform_getMicLevel()
