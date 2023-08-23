@@ -76,6 +76,8 @@ enum opstatus radioStatus;      // Current operating status
 
 AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
 
+extern void pmu_setBasebandPower(bool value); // Wrapper to PMU commands
+
 void radio_serialCb(const struct device *dev, void *user_data)
 {
     uint8_t c;
@@ -121,14 +123,14 @@ void radio_uartPrint(const char *fmt, ...)
 
 void radio_uartScan(char *buf)
 {
-    k_msgq_get(&uart_msgq, buf, K_FOREVER);
+    k_msgq_get(&uart_msgq, buf, K_MSEC(100));
 }
 
 char *radio_getFwVersion()
 {
     char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
     radio_uartPrint("AT+VERSION\r\n");
-    k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    k_msgq_get(&uart_msgq, tx_buf, K_MSEC(100));
     return tx_buf;
 }
 
@@ -145,7 +147,7 @@ char *radio_getModel()
 {
     char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
     radio_uartPrint("AT+MODEL\r\n");
-    k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    k_msgq_get(&uart_msgq, tx_buf, K_MSEC(100));
     return tx_buf;
 }
 
@@ -158,6 +160,19 @@ enum Band radio_getBand()
     else if (!strncmp(tx_buf, "SA868S-UHF\r", SA8X8_MSG_SIZE))
         band = BND_UHF;
     free(tx_buf);
+    return band;
+}
+
+enum Band radio_waitUntilReady()
+{
+    bool ready = false;
+    enum Band band = BND_NONE;
+    do
+    {
+        band = radio_getBand();
+        if (band != BND_NONE)
+            ready = true;
+    } while(!ready);
     return band;
 }
 
@@ -175,7 +190,7 @@ void radio_enableTurbo()
     radio_uartPrint("AT+TURBO\r\n");
 
     char *tx_buf = (char *) malloc(sizeof(char) * SA8X8_MSG_SIZE);
-    ret = k_msgq_get(&uart_msgq, tx_buf, K_FOREVER);
+    ret = k_msgq_get(&uart_msgq, tx_buf, K_MSEC(100));
     if (ret) {
         printk("Error: in retrieving turbo response!\n");
         return;
@@ -195,6 +210,9 @@ void radio_init(const rtxStatus_t *rtxState)
     config      = rtxState;
     radioStatus = OFF;
     int ret;
+
+    // Turn on baseband
+    pmu_setBasebandPower(true);
 
     // Initialize GPIO for SA868S power down
     if (!gpio_is_ready_dt(&radio_pdn)) {
@@ -228,28 +246,25 @@ void radio_init(const rtxStatus_t *rtxState)
 
     uart_irq_rx_enable(radio_dev);
 
-    ret = gpio_pin_toggle_dt(&radio_pdn);
+    // Reset the SA868S baseband
+    ret = gpio_pin_set_dt(&radio_pdn, 1);
     if (ret != 0) {
         printk("Failed to reset baseband");
         return;
     }
-    delayMs(200);
+    delayMs(10);
     ret = gpio_pin_set_dt(&radio_pdn, 0);
     if (ret != 0) {
         printk("Failed to reset baseband");
         return;
     }
 
-    // Add SA8x8 FW version to Info menu
-    ui_registerInfoExtraEntry("Radio", radio_getModel);
-    ui_registerInfoExtraEntry("Radio FW", radio_getShortFwVersion);
-
-    // A small delay is needed to have SA8x8 ready to serve commands
-    delayMs(100);
+    // Wait until SA868 is responsive
+    enum Band band = radio_waitUntilReady();
 
     // Retrieve hardware configuration and update device descriptor
     hwInfo_t *hwInfo = platform_getHwInfo();
-    switch (radio_getBand())
+    switch (band)
     {
         case BND_VHF:
             hwInfo->vhf_band = 1;
@@ -276,6 +291,10 @@ void radio_init(const rtxStatus_t *rtxState)
 
     // Enable TURBO mode (115200 baud rate serial)
     radio_enableTurbo();
+
+    // Register SA8x8 FW version to Info menu
+    ui_registerInfoExtraEntry("Radio", radio_getModel);
+    ui_registerInfoExtraEntry("Radio FW", radio_getShortFwVersion);
 
     // TODO: Implement audio paths configuration
 
