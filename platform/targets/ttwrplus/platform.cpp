@@ -182,7 +182,7 @@ void pmu_init()
     PMU.enableALDO2();
 
     //! ALDO4 GNSS VDD
-    PMU.enableALDO4();
+    PMU.disableALDO4();
 
     //! BLDO1 MIC VDD
     PMU.enableBLDO1();
@@ -331,6 +331,14 @@ void pmu_setBasebandPower(bool value)
         PMU.enableDC3();
     else
         PMU.disableDC3();
+}
+
+void pmu_setGPSPower(bool value)
+{
+    if (value)
+        PMU.enableALDO4();
+    else
+        PMU.disableALDO4();
 }
 
 void platform_init()
