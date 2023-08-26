@@ -2279,7 +2279,7 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data)
 
 void ui_registerInfoExtraEntry(const char *key, char *(*value_cb)())
 {
-    info_extra_entry entry = {key, value_cb};
+    info_extra_entry entry = {key, value_cb()};
     info_extra_entries[info_n_extra_entries++] = entry;
 }
 

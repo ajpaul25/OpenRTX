@@ -456,9 +456,8 @@ int _ui_getInfoValueName(char *buf, uint8_t max_len, uint8_t index)
     }
     else if (index < info_num + info_n_extra_entries)
     {
-        char *value = (info_extra_entries[index - info_num].value_cb)();
+        char *value = info_extra_entries[index - info_num].value;
         snprintf(buf, max_len, "%s", value);
-        free(value);
     }
     else
         return -1;

@@ -213,7 +213,7 @@ ui_state_t;
  */
 typedef struct {
     const char *key;
-    char *(*value_cb)();
+    char *value;
 } info_extra_entry;
 
 extern layout_t layout;
