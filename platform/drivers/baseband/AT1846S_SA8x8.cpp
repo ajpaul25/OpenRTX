@@ -233,6 +233,8 @@ uint16_t AT1846S::i2c_readReg16(uint8_t reg)
     int32_t value = 0;
     radio_uartPrint("AT+PEEK=%d\r\n", reg);
     radio_uartScan(rx_buf);
-    sscanf(rx_buf, "%d\r", &value);
+    int ret = sscanf(rx_buf, "%d\r", &value);
+    if (ret != 1)
+        printk("SA8x8 Error: %d ->\n", reg);
     return value;
 }
