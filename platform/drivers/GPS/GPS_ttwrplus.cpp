@@ -25,6 +25,7 @@
 #include <peripherals/gps.h>
 #include <hwconfig.h>
 #include <string.h>
+#include <pmu.h>
 
 /*
  * Define gps node to control the SA868
@@ -44,8 +45,6 @@ static char rx_buf[NMEA_MSG_SIZE];
 static uint16_t rx_buf_pos;
 
 static const struct device *const gps_dev = DEVICE_DT_GET(UART_GPS_DEV_NODE);
-
-extern void pmu_setGPSPower(bool value); // Defined in platform.cpp
 
 void gps_serialCb(const struct device *dev, void *user_data)
 {

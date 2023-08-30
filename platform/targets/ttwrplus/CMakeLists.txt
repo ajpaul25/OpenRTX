@@ -10,6 +10,7 @@ target_sources(app
     ${OPENRTX_ROOT}/platform/mcu/ESP32S3/drivers/delays.c
 
     ${OPENRTX_ROOT}/platform/targets/ttwrplus/platform.cpp
+    ${OPENRTX_ROOT}/platform/targets/ttwrplus/pmu.cpp
 
     ${OPENRTX_ROOT}/platform/drivers/display/SH1106_ttwrplus.c
     ${OPENRTX_ROOT}/platform/drivers/keyboard/keyboard_ttwrplus.c
