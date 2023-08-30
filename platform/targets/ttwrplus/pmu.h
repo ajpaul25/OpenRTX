@@ -58,4 +58,14 @@ void pmu_setGPSPower(bool value);
 
 uint16_t pmu_getVbat();
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void pmu_handleIRQ();
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif // PMU_H

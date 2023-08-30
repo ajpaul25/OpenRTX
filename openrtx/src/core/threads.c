@@ -40,6 +40,10 @@
 #endif
 #include <voicePrompts.h>
 
+#if defined(PLATFORM_TTWRPLUS)
+extern void pmu_handleIRQ();
+#endif // PLATFORM_TTWRPLUS
+
 /* Mutex for concurrent access to RTX state variable */
 extern pthread_mutex_t rtx_mutex;
 
@@ -72,6 +76,9 @@ void *ui_threadFunc(void *arg)
             ui_pushEvent(EVENT_KBD, kbd_msg.value);
         }
 
+#if defined(PLATFORM_TTWRPLUS)
+        pmu_handleIRQ();
+#endif // PLATFORM_TTWRPLUS
         pthread_mutex_lock(&state_mutex);   // Lock r/w access to radio state
         ui_updateFSM(&sync_rtx);            // Update UI FSM
         ui_saveState();                     // Save local state copy

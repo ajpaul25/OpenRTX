@@ -73,6 +73,12 @@
             zephyr,code = <INPUT_BTN_SELECT>;
             label = "PTT Button";
         };
+
+        pin_pmu_irq: button_3 {
+            gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+            zephyr,code = <INPUT_KEY_VOLUMEUP>;
+            label = "PMU IRQ Pin";
+        };
   };
 };
 

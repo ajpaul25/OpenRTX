@@ -34,10 +34,15 @@ keyboard_t keys = 0;
 
 static const struct device *const buttons_dev = DEVICE_DT_GET(DT_NODELABEL(buttons));
 
+extern bool pmu_irq; // Defined in platform/targets/ttwrplus/pmu.cpp
+
 static void gpio_keys_cb_handler(struct input_event *evt)
 {
     // Map betweek Zephyr keys and OpenRTX keys
     switch (evt->code) {
+        case INPUT_KEY_VOLUMEUP: // This GPIO is the PMU IRQ pin
+            pmu_irq = true;
+            break;
         case INPUT_KEY_VOLUMEDOWN:
             keys = (evt->value) ? keys | KEY_MONI : keys & ~KEY_MONI;
             break;

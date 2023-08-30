@@ -18,6 +18,7 @@
  ***************************************************************************/
 
 #include <interfaces/delays.h>
+#include <interfaces/keyboard.h>
 #include <hwconfig.h>
 #include "pmu.h"
 
@@ -29,6 +30,11 @@
  */
 #define XPOWERS_CHIP_AXP2101
 #include <XPowersLib.h>
+
+/*
+ * This flag is set by the PMU IRQ and signals an interrupt to check
+ */
+bool pmu_irq = false;
 
 int pmu_registerReadByte(uint8_t devAddr, uint8_t regAddr, uint8_t *data, uint8_t len)
 {
@@ -230,10 +236,11 @@ void pmu_init()
     PMU.clearIrqStatus();
     // Enable the required interrupt function
     PMU.enableIRQ(
-        XPOWERS_AXP2101_BAT_INSERT_IRQ    | XPOWERS_AXP2101_BAT_REMOVE_IRQ      |   //BATTERY
-        XPOWERS_AXP2101_VBUS_INSERT_IRQ   | XPOWERS_AXP2101_VBUS_REMOVE_IRQ     |   //VBUS
-        XPOWERS_AXP2101_PKEY_SHORT_IRQ    | XPOWERS_AXP2101_PKEY_LONG_IRQ       |   //POWER KEY
-        XPOWERS_AXP2101_BAT_CHG_DONE_IRQ  | XPOWERS_AXP2101_BAT_CHG_START_IRQ       //CHARGE
+        XPOWERS_AXP2101_BAT_INSERT_IRQ    | XPOWERS_AXP2101_BAT_REMOVE_IRQ      |   // BATTERY
+        XPOWERS_AXP2101_VBUS_INSERT_IRQ   | XPOWERS_AXP2101_VBUS_REMOVE_IRQ     |   // VBUS
+        XPOWERS_AXP2101_PKEY_POSITIVE_IRQ | XPOWERS_AXP2101_PKEY_NEGATIVE_IRQ   |   // POWER KEY ON/OFF
+        XPOWERS_AXP2101_PKEY_LONG_IRQ     |                                         // POWER KEY LONG PRESS
+        XPOWERS_AXP2101_BAT_CHG_DONE_IRQ  | XPOWERS_AXP2101_BAT_CHG_START_IRQ       // CHARGE
     );
 
     // Set the precharge charging current
@@ -253,7 +260,7 @@ void pmu_init()
     PMU.setChargeTargetVoltage(XPOWERS_AXP2101_CHG_VOL_4V);
 
     // Disable the PMU long press shutdown function
-    //PMU.disableLongPressShutdown();
+    PMU.disableLongPressShutdown();
 
     // Get charging target current
     const uint16_t currTable[] = {
@@ -290,4 +297,50 @@ void pmu_setGPSPower(bool value)
 uint16_t pmu_getVbat()
 {
     return PMU.isBatteryConnect() ? PMU.getBattVoltage() : 0;
+}
+
+extern keyboard_t keys;
+
+void pmu_handleIRQ()
+{
+    // Check if we got some interrupts
+    if (!pmu_irq)
+        return;
+    // Clear flag
+    pmu_irq = false;
+
+    // Get PMU Interrupt Status Register
+    uint32_t status = PMU.getIrqStatus();
+
+    if (PMU.isPekeyPositiveIrq()) {
+        keys &= ~KEY_ESC;
+    }
+
+    if (PMU.isPekeyNegativeIrq()) {
+        keys |= KEY_ESC;
+    }
+
+    if (PMU.isBatChagerStartIrq() || PMU.isBatteryConnect()) {
+        PMU.setChargingLedMode(XPOWERS_CHG_LED_CTRL_CHG);
+    }
+
+    if (PMU.isBatRemoveIrq()) {
+        PMU.setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ);
+    }
+
+    if (PMU.isVbusInsertIrq()) {
+        ;
+    }
+
+    if (PMU.isVbusRemoveIrq()) {
+        ;
+    }
+
+    if (PMU.isPekeyLongPressIrq()) {
+        // TODO Shutdown radio, set platform_pwrButtonStatus to false
+        PMU.shutdown();
+    }
+
+    // Clear PMU Interrupt Status Register
+    PMU.clearIrqStatus();
 }
