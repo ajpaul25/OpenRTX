@@ -62,10 +62,17 @@ static uint16_t rx_buf_pos;
 
 static const struct device *const radio_dev = DEVICE_DT_GET(UART_RADIO_DEV_NODE);
 
+/*
+ * Get gpio devicetree object to access radio power control
+ */
 #define RADIO_PDN_NODE DT_ALIAS(radio_pdn)
-
 static const struct gpio_dt_spec radio_pdn = GPIO_DT_SPEC_GET(RADIO_PDN_NODE, gpios);
 
+/*
+ * Get gpio devicetree object to access radio H/L control
+ */
+#define RADIO_PWR_NODE DT_NODELABEL(radio_pwr)
+static const struct gpio_dt_spec radio_pwr = GPIO_DT_SPEC_GET_OR(RADIO_PWR_NODE, gpios, {0});
 
 const rtxStatus_t    *config;   // Pointer to data structure with radio configuration
 
@@ -221,6 +228,25 @@ void radio_enableTurbo()
     }
 }
 
+void radio_setPower(float power)
+{
+    char buf[SA8X8_MSG_SIZE] = { 0 };
+    int ret;
+    // TODO: Implement fine-grained power control through PA_BIAS SA8x8 register
+    uint8_t amp_enable = (power > 1.0f) ? 1 : 0;
+    // TODO: We will need AT_AMP in T-TWR Plus 2.0
+    // radio_uartPrint("AT+AMP=%d\r\n", amp_enable);
+    // printk("AT+AMP=%d\r\n", amp_enable);
+    // radio_uartScan(buf);
+    // if (strncmp(buf, "OK\r", SA8X8_MSG_SIZE))
+    //     printk("Error: in setting power mode!\n");
+    ret = gpio_pin_set_dt(&radio_pwr, amp_enable);
+    if (ret != 0) {
+        printk("Error: Failed to enable high power mode");
+        return;
+    }
+}
+
 void radio_init(const rtxStatus_t *rtxState)
 {
     config      = rtxState;
@@ -235,10 +261,19 @@ void radio_init(const rtxStatus_t *rtxState)
         printk("Error: radio device %s is not ready\n",
                radio_pdn.port->name);
     }
+    // Initialize GPIO for SA868S high power mode
+    if (!gpio_is_ready_dt(&radio_pwr)) {
+        printk("Error: high power GPIO %s is not ready\n",
+               radio_pdn.port->name);
+    }
 
     ret = gpio_pin_configure_dt(&radio_pdn, GPIO_OUTPUT);
     if (ret != 0) {
         printk("Error %d: failed to configure %s pin %d\n", ret, radio_pdn.port->name, radio_pdn.pin);
+    }
+    ret = gpio_pin_configure_dt(&radio_pwr, GPIO_OUTPUT);
+    if (ret != 0) {
+        printk("Error %d: failed to configure %s pin %d\n", ret, radio_pwr.port->name, radio_pwr.pin);
     }
 
     // Reset the SA868S baseband
@@ -404,6 +439,7 @@ void radio_enableTx()
 
     // Constrain output power between 1W and 5W.
     float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
+    radio_setPower(power);
 
     //
     // FIXME: workaround to fix a small carrier-only gap which appears at the
