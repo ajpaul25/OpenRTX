@@ -39,50 +39,45 @@
 #define BAT_NONE
 
 /* Signalling LEDs */
-//#define PTT_LED     GPIOC,8
-//#define SYNC_LED    GPIOC,9
-//#define ERR_LED     GPIOA,8
+#define PTT_LED     GPIOB,0
+#define SYNC_LED    GPIOB,1
+#define ERR_LED     GPIOB,2
 
 /* Display */
-#define LCD_RST     GPIOC,7
-#define LCD_RS      GPIOC,6
-#define LCD_CS      GPIOB,14
+#define LCD_RST     GPIOC,13
+#define LCD_RS      GPIOC,14
+#define LCD_CS      GPIOC,15
 #define SPI2_CLK    GPIOB,13
-#define SPI2_SDO    GPIOB,9     // UNUSED
+#define SPI2_SDO    GPIOB,14     // UNUSED
 #define SPI2_SDI    GPIOB,15
-//#define LCD_BKLIGHT GPIOE,15
 
 /* Keyboard */
-//#define ESC_SW      GPIOB,8
-//#define RIGHT_SW    GPIOB,11
-//#define UP_SW       GPIOB,10
-//#define DOWN_SW     GPIOC,2
-//#define LEFT_SW     GPIOC,3
-//#define ENTER_SW    GPIOB,12
-#define KB_ROW0     GPIOB,8
-#define KB_ROW1     GPIOB,11
-#define KB_ROW2     GPIOB,10
-#define KB_ROW3     GPIOC,2
-#define KB_ROW4     GPIOC,3
-#define KB_COL0     GPIOC,12
-#define KB_COL1     GPIOC,8
-#define KB_COL2     GPIOC,9
-#define KB_COL3     GPIOA,8
+#define KB_ROW0     GPIOB,3
+#define KB_ROW1     GPIOB,4
+#define KB_ROW2     GPIOB,5
+#define KB_ROW3     GPIOB,6
+#define KB_ROW4     GPIOB,7
+#define KB_COL0     GPIOB,12
+#define KB_COL1     GPIOB,10
+#define KB_COL2     GPIOB,9
+#define KB_COL3     GPIOB,8
 
 
-#define PTT_SW      GPIOC,13
-#define PTT_OUT     GPIOD,2
+#define PTT_SW      GPIOA,11
+#define PTT_OUT     GPIOA,10
 
 /* Audio */
 #define AUDIO_MIC   GPIOA,2
 #define AUDIO_SPK   GPIOA,5
 #define BASEBAND_RX GPIOA,1
 #define BASEBAND_TX GPIOA,4
-#define SPK_MUTE    GPIOB,1
-#define MIC_MUTE    GPIOC,4
-#define MIC_GAIN    GPIOC,5
+#define SPK_MUTE    GPIOA,3
+#define MIC_MUTE    GPIOA,0
 
-//#define AIN_HWVER   GPIOA,3
-//#define POWER_SW    GPIOA,15
+/* PLL */
+#define PLL_CS  GPIOA,6
+#define PLL_CLK GPIOA,7
+#define PLL_DAT GPIOA,8
+#define PLL_LD  GPIOA,9
 
 #endif
