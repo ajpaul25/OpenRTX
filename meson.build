@@ -426,7 +426,7 @@ generic_stm32f401xc_src = ['platform/targets/Generic_STM32F401XC/platform.c',
                           'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
                           'platform/drivers/stubs/keyboard_stub.c',
                           'platform/drivers/stubs/audio_stub.c',
-                          'platform/drivers/stubs/display_stub.c',
+                          'platform/drivers/display/SSD1306_generic.c',
                           'platform/drivers/NVM/nvmem_generic_stm32f401xc.c',
                           'platform/drivers/stubs/cps_io_stub.c',
                          ]
