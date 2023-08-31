@@ -412,16 +412,6 @@ mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 ##
 ## Generic_STM32F401XC
 ##
-#generic_stm32f401xc_src = ['platform/targets/Generic_STM32F401XC/platform.c',
-  #             'platform/drivers/ADC/ADC1_Mod17.c',
-  #           'platform/drivers/keyboard/keyboard_Mod17.c',
-  #           'platform/drivers/NVM/nvmem_Mod17.c',
-  #           'platform/drivers/CPS/cps_io_native_Mod17.c',
-#             'platform/drivers/baseband/radio_Generic_STM32F401XC.cpp',
-             #            'platform/drivers/audio/inputStream_Mod17.cpp',
-             #'platform/drivers/audio/audio_Mod17.c'
-#             ]
-
 generic_stm32f401xc_src = ['platform/targets/Generic_STM32F401XC/platform.c',
                           'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
                           'platform/drivers/stubs/keyboard_stub.c',
