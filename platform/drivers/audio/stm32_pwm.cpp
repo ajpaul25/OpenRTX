@@ -33,7 +33,7 @@ using Dma1_Stream2 = DmaStream< DMA1_BASE, 2, 1, 3 >; // DMA 1, Stream 2, channe
 static const struct PwmChannelCfg *config;                                          // Config
 static struct streamCtx     *context;                                               // Current stream context
 static StreamHandler         stream(Dma1_Stream2::init(10, DataSize::_16BIT, 1));   // DMA stream handler
-static Timer                 tim(TIM7_BASE);                                        // Trigger timebase
+static Timer                 tim(TIM5_BASE);                                        // Trigger timebase
 
 
 /**
@@ -68,7 +68,7 @@ void __attribute__((naked)) DMA1_Stream2_IRQHandler()
 void stm32pwm_init()
 {
     // Enable peripherals
-    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM5EN;
     __DSB();
 
     // Init DMA stream
@@ -80,7 +80,7 @@ void stm32pwm_terminate()
     if(stream.running())
         stream.halt();
 
-    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN;
+    RCC->APB1ENR &= ~RCC_APB1ENR_TIM5EN;
     __DSB();
 }
 

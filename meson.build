@@ -201,10 +201,10 @@ gdx_src = gdx_src + openrtx_ui_default
 ##
 
 ##
-## STM32F405
+## STM32F4xx
 ##
 
-stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
+stm32f4xx_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/boot/bsp.cpp',
                  'platform/mcu/STM32F4xx/boot/libc_integration.cpp',
                  'platform/mcu/STM32F4xx/drivers/usb/usb_bsp.c',
@@ -221,18 +221,35 @@ stm32f405_src = ['platform/mcu/STM32F4xx/boot/startup.cpp',
                  'platform/mcu/STM32F4xx/drivers/delays.cpp',
                  'platform/mcu/STM32F4xx/drivers/rtc.c',
                  'platform/mcu/STM32F4xx/drivers/SPI2.c',
-                 'platform/mcu/STM32F4xx/drivers/USART3.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
-                 'platform/drivers/audio/stm32_dac.cpp',
-                 'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
-stm32f405_inc = ['platform/mcu/CMSIS/Include',
+stm32f4xx_inc = ['platform/mcu/CMSIS/Include',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Include',
                  'platform/mcu/STM32F4xx',
                  'platform/mcu/STM32F4xx/drivers',
                  'platform/mcu/STM32F4xx/drivers/usb']
+
+##
+## STM32F401
+##
+
+stm32f401_inc = stm32f4xx_inc
+
+stm32f401_src = stm32f4xx_src
+
+stm32f401_def = {'STM32F401xC': '', 'HSE_VALUE':'8000000'}
+
+##
+## STM32F405
+##
+
+stm32f405_inc = stm32f4xx_inc
+
+stm32f405_src = stm32f4xx_src + ['platform/drivers/audio/stm32_dac.cpp',
+                                 'platform/drivers/audio/stm32_adc.cpp',
+                                 'platform/mcu/STM32F4xx/drivers/USART3.cpp']
 
 stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000'}
 
@@ -393,6 +410,33 @@ mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
 mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 ##
+## Generic_STM32F401XC
+##
+#generic_stm32f401xc_src = ['platform/targets/Generic_STM32F401XC/platform.c',
+  #             'platform/drivers/ADC/ADC1_Mod17.c',
+  #           'platform/drivers/keyboard/keyboard_Mod17.c',
+  #           'platform/drivers/NVM/nvmem_Mod17.c',
+  #           'platform/drivers/CPS/cps_io_native_Mod17.c',
+#             'platform/drivers/baseband/radio_Generic_STM32F401XC.cpp',
+             #            'platform/drivers/audio/inputStream_Mod17.cpp',
+             #'platform/drivers/audio/audio_Mod17.c'
+#             ]
+
+generic_stm32f401xc_src = ['platform/targets/Generic_STM32F401XC/platform.c',
+                          'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
+                          'platform/drivers/stubs/keyboard_stub.c',
+                          'platform/drivers/stubs/audio_stub.c',
+                          'platform/drivers/stubs/display_stub.c',
+                          'platform/drivers/stubs/nvmem_stub.c',
+                          'platform/drivers/stubs/cps_io_stub.c',
+                         ]
+
+
+generic_stm32f401xc_src = src + openrtx_ui_default + generic_stm32f401xc_src + stm32f401_src
+generic_stm32f401xc_inc = inc + stm32f401_inc + ['platform/targets/Generic_STM32F401XC']
+generic_stm32f401xc_def = def + stm32f401_def + {'PLATFORM_GENERIC_STM32F401XC': ''}
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -477,6 +521,15 @@ foreach k, v : mod17_def
   endif
 endforeach
 
+generic_stm32f401xc_args = []
+foreach k, v : generic_stm32f401xc_def
+  if v == ''
+    generic_stm32f401xc_args += '-D@0@'.format(k)
+  else
+    generic_stm32f401xc_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'cpp_args' : linux_cpp_args,
@@ -532,6 +585,15 @@ mod17_opts  = {'sources': mod17_src,
                'dependencies': [codec2_dep],
                'include_directories': mod17_inc}
 
+generic_stm32f401xc_opts  = {'sources': generic_stm32f401xc_src,
+               'c_args': generic_stm32f401xc_args,
+               'cpp_args': generic_stm32f401xc_args,
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_generic_stm32f401xc.ld',
+                              '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
+               'include_directories': generic_stm32f401xc_inc}
+
+
 ##
 ## ---------------------------- Compilation targets ----------------------------
 ##
@@ -574,6 +636,12 @@ targets = [
 
    {'name': 'mod17',
    'opts': mod17_opts,
+   'flashable': true,
+   'wrap': ' ',
+   'load_addr': ' '},
+
+   {'name': 'generic_stm32f401xc',
+   'opts': generic_stm32f401xc_opts,
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
