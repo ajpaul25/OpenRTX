@@ -53,12 +53,22 @@
 //#define LCD_BKLIGHT GPIOE,15
 
 /* Keyboard */
-#define ESC_SW      GPIOB,8
-#define RIGHT_SW    GPIOB,11
-#define UP_SW       GPIOB,10
-#define DOWN_SW     GPIOC,2
-#define LEFT_SW     GPIOC,3
-#define ENTER_SW    GPIOB,12
+//#define ESC_SW      GPIOB,8
+//#define RIGHT_SW    GPIOB,11
+//#define UP_SW       GPIOB,10
+//#define DOWN_SW     GPIOC,2
+//#define LEFT_SW     GPIOC,3
+//#define ENTER_SW    GPIOB,12
+#define KB_ROW0     GPIOB,8
+#define KB_ROW1     GPIOB,11
+#define KB_ROW2     GPIOB,10
+#define KB_ROW3     GPIOC,2
+#define KB_ROW4     GPIOC,3
+#define KB_COL0     GPIOC,12
+#define KB_COL1     GPIOC,8
+#define KB_COL2     GPIOC,9
+#define KB_COL3     GPIOA,8
+
 
 #define PTT_SW      GPIOC,13
 #define PTT_OUT     GPIOD,2
