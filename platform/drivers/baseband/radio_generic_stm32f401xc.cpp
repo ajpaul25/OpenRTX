@@ -21,19 +21,38 @@
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
+#include "MC145158.h"
+
+#define IF_FREQ 45100000 // Intermediate frequency 45.1MHz
+#define PLL_DIVISOR 127
 
 enum  opstatus      radioStatus;   // Current operating status
+const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
+
 
 
 void radio_init(const rtxStatus_t *rtxState)
 {
-    (void) rtxState;
+    config = rtxState;
 
     radioStatus = OFF;
+    gpio_setMode(PTT_SW, INPUT);
+    gpio_setMode(PTT_OUT, OUTPUT);
+    gpio_setMode(SPK_MUTE, OUTPUT);
+    gpio_setMode(MIC_MUTE, OUTPUT);
+
+    gpio_clearPin(PTT_OUT);
+    gpio_clearPin(SPK_MUTE);
+    gpio_clearPin(MIC_MUTE);
+
+    radio_disableAfOutput();
+
+    MC145158_init();
 }
 
 void radio_terminate()
 {
+    MC145158_terminate();
     radioStatus = OFF;
 }
 
@@ -45,7 +64,26 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void) mode;
+    switch(mode)
+    {
+        case OPMODE_FM:
+	    gpio_setPin(MIC_MUTE);
+	    // set MCU->Speaker output to input/hi-z?
+            break;
+
+        case OPMODE_DMR:
+	    gpio_clearPin(MIC_MUTE);
+	    radio_disableAfOutput();
+            break;
+
+        case OPMODE_M17:
+	    gpio_clearPin(MIC_MUTE);
+	    radio_disableAfOutput();
+            break;
+
+        default:
+            break;
+    }
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -55,29 +93,38 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-
+    gpio_setPin(SPK_MUTE);
 }
 
 void radio_disableAfOutput()
 {
-
+    gpio_clearPin(SPK_MUTE);
 }
 
 void radio_enableRx()
 {
+    // Set PLL frequency
+    MC145158_setFrequency(config->rxFrequency-IF_FREQ, PLL_DIVISOR);
+
     radioStatus = RX;
     gpio_clearPin(PTT_OUT);
 }
 
 void radio_enableTx()
 {
+    if(config->txDisable == 1) return;
+
+    // Set PLL frequency
+    MC145158_setFrequency(config->txFrequency, PLL_DIVISOR);
+
     radioStatus = TX;
     gpio_setPin(PTT_OUT);
 }
 
 void radio_disableRtx()
 {
-
+    radioStatus = OFF;
+    gpio_clearPin(PTT_OUT);
 }
 
 void radio_updateConfiguration()
