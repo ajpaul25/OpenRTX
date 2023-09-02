@@ -25,46 +25,12 @@
 #define REF_CLK 5000000.0F  /* Reference clock: 5MHz                 */
 #define STEP 12500
 
-void _spiSend(uint8_t value)
-{
-    uint8_t temp = value;
-
-    gpio_clearPin(PLL_CS);
-    delayUs(10);
-
-    for(uint8_t i = 0; i < 8; i++)
-    {
-        gpio_setPin(PLL_CLK);
-        delayUs(1);
-
-        if(temp & 0x8000)
-        {
-            gpio_setPin(PLL_DAT);
-        }
-        else
-        {
-            gpio_clearPin(PLL_DAT);
-        }
-
-        temp <<= 1;
-
-        delayUs(1);
-        gpio_clearPin(PLL_CLK);
-        delayUs(1);
-    }
-
-    gpio_setPin(PLL_CLK);
-
-    delayUs(10);
-    gpio_setPin(PLL_CS);
-}
-
 void MC145158_init()
 {
     gpio_setMode(PLL_CLK, OUTPUT);
     gpio_setMode(PLL_DAT, OUTPUT);
-    gpio_setMode(PLL_CS,  OUTPUT);
-    gpio_setPin(PLL_CS);
+    gpio_setMode(PLL_LE,  OUTPUT);
+    gpio_setPin(PLL_LE);
     gpio_setMode(PLL_LD, INPUT);
 }
 
@@ -72,7 +38,34 @@ void MC145158_terminate()
 {
     gpio_setMode(PLL_CLK, INPUT);
     gpio_setMode(PLL_DAT, INPUT);
-    gpio_setMode(PLL_CS,  INPUT);
+    gpio_setMode(PLL_LE,  INPUT);
+}
+
+void _pllSendByte(uint8_t b)
+{
+    for( int i=0; i<8; i++) 
+    {
+        if( (b<<i) & 0x80 )
+            gpio_setPin(PLL_DAT);
+        else
+            gpio_clearPin(PLL_DAT);
+
+        delayUs(2);
+        gpio_setPin(PLL_CLK);
+        delayUs(2);
+        gpio_clearPin(PLL_CLK);
+    }
+    delayUs(2);
+    gpio_setPin(PLL_DAT);
+    delayUs(2);
+}
+
+void _pllLatch()
+{
+    gpio_setPin(PLL_LE);
+    delayUs(2);
+    gpio_clearPin(PLL_LE);
+    delayUs(2);
 }
 
 void MC145158_setFrequency(float freq, uint8_t clkDiv)
@@ -95,8 +88,14 @@ void MC145158_setFrequency(float freq, uint8_t clkDiv)
     // 0000 00nn | nnnn nnnn | aaaa aaa0 | rrrr rrrr | rrrr rrr1
     // 3 bytes, latch, 2 bytes, latch
 
-    for(int i=0; i<5; i++)
-      _spiSend(b[i]);
+    _pllSendByte(b[0]);
+    _pllSendByte(b[1]);
+    _pllSendByte(b[2]);
+    _pllLatch();
+    _pllSendByte(b[3]);
+    _pllSendByte(b[4]);
+    _pllLatch();
+    gpio_clearPin(PLL_DAT);
 }
 
 bool MC145158_isPllLocked()

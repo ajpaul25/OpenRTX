@@ -75,7 +75,7 @@
 #define MIC_MUTE    GPIOA,0
 
 /* PLL */
-#define PLL_CS  GPIOA,6
+#define PLL_LE  GPIOA,6
 #define PLL_CLK GPIOA,7
 #define PLL_DAT GPIOA,8
 #define PLL_LD  GPIOA,9
