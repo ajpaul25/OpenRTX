@@ -22,16 +22,14 @@
 #include <interfaces/platform.h>
 #include <hwconfig.h>
 #include <string.h>
-#include <ADC1_MDx.h>
-#include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
-#include <peripherals/rtc.h>
 #include <interfaces/audio.h>
 
 static hwInfo_t hwInfo;
 
 void platform_init()
 {
+    gpio_setMode(PTT_OUT, OUTPUT);
+    gpio_setPin(PTT_OUT);
     /* Configure GPIOs */
 /*    gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED, OUTPUT);
@@ -61,7 +59,6 @@ void platform_init()
     nvm_init();                      /* Initialise non volatile memory manager */
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     //toneGen_init();                  /* Initialise tone generator              */
-    rtc_init();                      /* Initialise RTC                         */
     audio_init();                    /* Initialise audio management module     */
 }
 
@@ -196,16 +193,6 @@ void platform_beepStart(uint16_t freq)
 void platform_beepStop()
 {
     //toneGen_beepOff();
-}
-
-datetime_t platform_getCurrentTime()
-{
-    return rtc_getTime();
-}
-
-void platform_setTime(datetime_t t)
-{
-    rtc_setTime(t);
 }
 
 const hwInfo_t *platform_getHwInfo()
