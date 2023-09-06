@@ -30,7 +30,7 @@
  * the MEMORY definitions below accordingly.
  */
 _main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
-_main_stack_top  = 0x10000000 + _main_stack_size;
+_main_stack_top  = 0x20000000 + _main_stack_size;
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
 _heap_end = 0x20010000;                            /* end of available ram, before the stack  */
