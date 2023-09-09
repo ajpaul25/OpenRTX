@@ -28,27 +28,6 @@ static hwInfo_t hwInfo;
 
 void platform_init()
 {
-    RCC->AHB1ENR     |= RCC_AHB1ENR_GPIOCEN; //RCC ON
- 
-    GPIOC->MODER    |= GPIO_MODER_MODER13_0; //mode out
-    GPIOC->OTYPER   = 0;
-    GPIOC->OSPEEDR  = 0;
-
-    while (1)
-    {
-        GPIOC->ODR ^=   GPIO_ODR_OD13;
-        delayMs(1000);
-    }
-
-/*    gpio_setMode(PTT_OUT, OUTPUT);
-    for(;;)
-    {
-        gpio_setPin(PTT_OUT);
-        sleep(1000);
-        gpio_clearPin(PTT_OUT);
-        sleep(1000);
-    }*/
-
     /* Configure GPIOs */
 /*    gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED, OUTPUT);
@@ -57,15 +36,16 @@ void platform_init()
     gpio_setMode(CH_SELECTOR_1, INPUT);
     gpio_setMode(CH_SELECTOR_2, INPUT);
     gpio_setMode(CH_SELECTOR_3, INPUT);
+*/
 
-    gpio_setMode(PTT_SW,  INPUT_PULL_UP);
-    gpio_setMode(PTT_EXT, INPUT_PULL_UP);
+    gpio_setMode(PTT_SW, INPUT_PULL_UP);
+    gpio_setMode(PTT_OUT, OUTPUT);
 
-    #ifndef RUNNING_TESTSUITE
+/*    #ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
     #endif
-*/
+
     /*
      * Initialise ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
@@ -73,12 +53,12 @@ void platform_init()
      */
     //adc1_init();
 
-    //memset(&hwInfo, 0x00, sizeof(hwInfo));
+    memset(&hwInfo, 0x00, sizeof(hwInfo));
 
-    //nvm_init();                      /* Initialise non volatile memory manager */
-    //nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
+    nvm_init();                      /* Initialise non volatile memory manager */
+    nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     //toneGen_init();                  /* Initialise tone generator              */
-    //audio_init();                    /* Initialise audio management module     */
+    audio_init();                    /* Initialise audio management module     */
 }
 
 void platform_terminate()
@@ -145,10 +125,10 @@ int8_t platform_getChSelector()
 bool platform_getPttStatus()
 {
     /* PTT line has a pullup resistor with PTT switch closing to ground */
-//    uint8_t intPttStatus = gpio_readPin(PTT_SW);
+    uint8_t intPttStatus = gpio_readPin(PTT_SW);
 //    uint8_t extPttStatus = gpio_readPin(PTT_EXT);
 //    return ((intPttStatus == 0) || (extPttStatus == 0)) ? true : false;
-      return false;
+    return (intPttStatus == 0) ? true : false;
 }
 
 bool platform_pwrButtonStatus()

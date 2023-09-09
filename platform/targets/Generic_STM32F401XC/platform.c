@@ -28,8 +28,6 @@ static hwInfo_t hwInfo;
 
 void platform_init()
 {
-    gpio_setMode(PTT_OUT, OUTPUT);
-    gpio_setPin(PTT_OUT);
     /* Configure GPIOs */
 /*    gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(RED_LED, OUTPUT);
@@ -38,15 +36,16 @@ void platform_init()
     gpio_setMode(CH_SELECTOR_1, INPUT);
     gpio_setMode(CH_SELECTOR_2, INPUT);
     gpio_setMode(CH_SELECTOR_3, INPUT);
+*/
 
-    gpio_setMode(PTT_SW,  INPUT_PULL_UP);
-    gpio_setMode(PTT_EXT, INPUT_PULL_UP);
+    gpio_setMode(PTT_SW, INPUT_PULL_UP);
+    gpio_setMode(PTT_OUT, OUTPUT);
 
-    #ifndef RUNNING_TESTSUITE
+/*    #ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
     #endif
-*/
+
     /*
      * Initialise ADC1, for vbat, RSSI, ...
      * Configuration of corresponding GPIOs in analog input mode is done inside
@@ -126,10 +125,10 @@ int8_t platform_getChSelector()
 bool platform_getPttStatus()
 {
     /* PTT line has a pullup resistor with PTT switch closing to ground */
-//    uint8_t intPttStatus = gpio_readPin(PTT_SW);
+    uint8_t intPttStatus = gpio_readPin(PTT_SW);
 //    uint8_t extPttStatus = gpio_readPin(PTT_EXT);
 //    return ((intPttStatus == 0) || (extPttStatus == 0)) ? true : false;
-      return false;
+    return (intPttStatus == 0) ? true : false;
 }
 
 bool platform_pwrButtonStatus()
