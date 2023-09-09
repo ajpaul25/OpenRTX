@@ -235,8 +235,9 @@ stm32f4xx_inc = ['platform/mcu/CMSIS/Include',
 
 stm32f401_src = stm32f4xx_src + ['platform/mcu/STM32F4xx/boot/startup_f401.cpp',
                                  'platform/mcu/STM32F4xx/boot/bsp_f401.cpp']
+
 stm32f401_inc = stm32f4xx_inc
-stm32f401_def = {'STM32F401xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_84MHz':''}
+stm32f401_def = {'STM32F401xC': '', 'HSE_VALUE':'25000000', 'SYSCLK_FREQ_84MHz':''}
 
 ##
 ## STM32F405
@@ -246,6 +247,15 @@ stm32f405_src = stm32f4xx_src + ['platform/mcu/STM32F4xx/boot/startup_f405.cpp',
                                  'platform/mcu/STM32F4xx/boot/bsp_f405.cpp']
 stm32f405_inc = stm32f4xx_inc
 stm32f405_def = {'STM32F405xx': '', 'HSE_VALUE':'8000000', 'SYSCLK_FREQ_168MHz':''}
+
+##
+## STM32F411
+##
+
+stm32f411_src = stm32f4xx_src + ['platform/mcu/STM32F4xx/boot/startup_f411.cpp',
+                                 'platform/mcu/STM32F4xx/boot/bsp_f411.cpp']
+stm32f411_inc = stm32f4xx_inc
+stm32f411_def = {'STM32F411xE': '', 'HSE_VALUE':'25000000', 'SYSCLK_FREQ_100MHz':''}
 
 ##
 ## STM32F469
@@ -435,6 +445,29 @@ generic_stm32f401xc_inc = inc + stm32f401_inc + ['platform/targets/Generic_STM32
 generic_stm32f401xc_def = def + stm32f401_def + {'PLATFORM_GENERIC_STM32F401XC': ''}
 
 ##
+## Generic_STM32F411XE
+##
+generic_stm32f411xe_src = ['platform/targets/Generic_STM32F411XE/platform.c',
+                          #'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
+                          #'platform/drivers/baseband/MC145158.c',
+                          'platform/drivers/stubs/display_stub.c',
+                          'platform/drivers/stubs/keyboard_stub.c',
+                          'platform/drivers/stubs/nvmem_stub.c',
+                          'platform/drivers/stubs/radio_stub.c',
+                          #'platform/drivers/keyboard/keyboard_20pin_matrix.c',
+                          'platform/drivers/stubs/audio_stub.c',
+                          #'platform/drivers/display/SH110x_generic.c',
+                          #'platform/drivers/NVM/nvmem_generic_stm32f401xc.c',
+                          'platform/drivers/stubs/cps_io_stub.c',
+                         ]
+
+
+generic_stm32f411xe_src = src + openrtx_ui_default + generic_stm32f411xe_src + stm32f411_src
+
+generic_stm32f411xe_inc = inc + stm32f411_inc + ['platform/targets/Generic_STM32F411XE']
+generic_stm32f411xe_def = def + stm32f411_def + {'PLATFORM_GENERIC_STM32F411XE': ''}
+
+##
 ## -------------------------- Compilation arguments ----------------------------
 ##
 
@@ -528,6 +561,15 @@ foreach k, v : generic_stm32f401xc_def
   endif
 endforeach
 
+generic_stm32f411xe_args = []
+foreach k, v : generic_stm32f411xe_def
+  if v == ''
+    generic_stm32f411xe_args += '-D@0@'.format(k)
+  else
+    generic_stm32f411xe_args += '-D@0@=@1@'.format(k, v)
+  endif
+endforeach
+
 linux_opts = {'sources': linux_src,
               'c_args': linux_c_args,
               'cpp_args' : linux_cpp_args,
@@ -591,6 +633,14 @@ generic_stm32f401xc_opts  = {'sources': generic_stm32f401xc_src,
                'dependencies': [codec2_dep],
                'include_directories': generic_stm32f401xc_inc}
 
+generic_stm32f411xe_opts  = {'sources': generic_stm32f411xe_src,
+               'c_args': generic_stm32f411xe_args,
+               'cpp_args': generic_stm32f411xe_args,
+               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_generic_stm32f411xe.ld',
+                              '-Wl,--print-memory-usage'],
+               'dependencies': [codec2_dep],
+               'include_directories': generic_stm32f411xe_inc}
+
 
 ##
 ## ---------------------------- Compilation targets ----------------------------
@@ -640,6 +690,12 @@ targets = [
 
    {'name': 'generic_stm32f401xc',
    'opts': generic_stm32f401xc_opts,
+   'flashable': true,
+   'wrap': ' ',
+   'load_addr': ' '},
+
+   {'name': 'generic_stm32f411xe',
+   'opts': generic_stm32f411xe_opts,
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
@@ -711,7 +767,7 @@ foreach t : targets
                     command : [gd77_loader, '-f', '@INPUT@', '-m', 'DM-1801',])
 
     # Module17 (and other STM32 generic dfu targets) also uses dfu-tool for flashing
-    elif name == 'openrtx_mod17' or name == 'openrtx_generic_stm32f401xc'
+    elif name == 'openrtx_mod17' or name == 'openrtx_generic_stm32f401xc' or name == 'openrtx_generic_stm32f411xe'
 
       # Wrap target for dfu-targets for consistency, same output as bin target
       custom_target(name+'_wrap',

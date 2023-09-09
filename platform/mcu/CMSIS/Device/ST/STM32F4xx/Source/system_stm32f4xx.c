@@ -150,6 +150,14 @@ uint32_t SystemCoreClock = 180000000;
 
 uint32_t SystemCoreClock = 168000000;
 
+#elif defined(SYSCLK_FREQ_100MHz)
+
+#define PLL_N      400
+#define PLL_P      4
+#define PLL_Q      8
+
+uint32_t SystemCoreClock = 100000000;
+
 #elif defined(SYSCLK_FREQ_84MHz)
 
 #define PLL_N      336
