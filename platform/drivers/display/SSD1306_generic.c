@@ -65,9 +65,6 @@ void display_renderPage(uint8_t page)
 
 void display_init()
 {
-    delayMs(1000);
-    gpio_setPin(PTT_OUT);
-    delayMs(1000);
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
     memset(frameBuffer, 0x00, FB_SIZE);
 
