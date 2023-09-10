@@ -44,9 +44,9 @@
 //#define ERR_LED     GPIOB,
 
 /* Display */
-#define LCD_RST     GPIOA,13
-#define LCD_RS      GPIOA,14
-#define LCD_CS      GPIOA,15
+#define LCD_RST     GPIOA,3
+#define LCD_RS      GPIOA,4
+#define LCD_CS      GPIOA,5
 #define SPI2_CLK    GPIOB,13
 #define SPI2_SDO    GPIOB,14     // UNUSED
 #define SPI2_SDI    GPIOB,15

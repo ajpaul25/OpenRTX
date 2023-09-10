@@ -139,7 +139,7 @@ bool platform_pwrButtonStatus()
      * is always a bit of noise in the ADC measurement making the returned
      * voltage not to be exactly zero.
      */
-    return (platform_getVbat() > 1000) ? true : false;
+    return true;
 }
 
 void platform_ledOn(led_t led)

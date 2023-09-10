@@ -43,20 +43,21 @@ static uint8_t frameBuffer[FB_SIZE];
  * Pixels in framebuffer are stored "by rows", while display needs data to be
  * sent "by columns": this function performs the needed conversion.
  *
- * @param row: pixel row to be be sent.
+ * @param pixel: pixel row to be be sent.
  */
-void display_renderRow(uint8_t row)
+void display_renderPage(uint8_t page)
 {
-    for(uint16_t i = 0; i < 64; i++)
+    for(uint8_t seg = 0; seg < SCREEN_WIDTH; seg++)
     {
         uint8_t out = 0;
-        uint8_t tmp = frameBuffer[(i * 16) + (15 - row)];
+        uint8_t tmp;// = frameBuffer[(i * SCREEN_WIDTH/8) + (SCREEN_WIDTH/8 - 1 - page)];
 
-        for(uint8_t j = 0; j < 8; j++)
+        for(uint8_t row = 0; row < 8; row++) //step through each of the 8 rows in the page to generate a segment (page-column)
         {
-            out |= ((tmp >> (7-j)) & 0x01) << j;
+            tmp = frameBuffer[(row + page*8)*SCREEN_WIDTH/8+seg/8];
+            //out |= ((tmp >> (7-j)) & 0x01) << j;
+            out |= ((tmp >> (seg % 8)) & 0x01) << row;
         }
-
         spi2_sendRecv(out);
     }
 }
@@ -64,6 +65,9 @@ void display_renderRow(uint8_t row)
 
 void display_init()
 {
+    delayMs(1000);
+    gpio_setPin(PTT_OUT);
+    delayMs(1000);
     /* Clear framebuffer, setting all pixels to 0x00 makes the screen white */
     memset(frameBuffer, 0x00, FB_SIZE);
 
@@ -97,6 +101,38 @@ void display_init()
     gpio_clearPin(LCD_CS);
 
     gpio_clearPin(LCD_RS);// RS low -> command mode
+
+	/* Init LCD */
+	spi2_sendRecv(0xAE); //display off
+	spi2_sendRecv(0x20); //Set Memory Addressing Mode   
+	spi2_sendRecv(0x10); //00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid
+	spi2_sendRecv(0xB0); //Set Page Start Address for Page Addressing Mode,0-7
+	spi2_sendRecv(0xC8); //Set COM Output Scan Direction
+	spi2_sendRecv(0x00); //---set low column address
+	spi2_sendRecv(0x00); //---set high column address
+	spi2_sendRecv(0x40); //--set start line address
+	spi2_sendRecv(0x81); //--set contrast control register
+	spi2_sendRecv(0xFF);
+	spi2_sendRecv(0xA1); //--set segment re-map 0 to 127
+	spi2_sendRecv(0xA6); //--set normal display
+	spi2_sendRecv(0xA8); //--set multiplex ratio(1 to 64)
+	spi2_sendRecv(0x3F); //
+	spi2_sendRecv(0xA4); //0xa4,Output follows RAM content;0xa5,Output ignores RAM content
+	spi2_sendRecv(0xD3); //-set display offset
+	spi2_sendRecv(0x00); //-not offset
+	spi2_sendRecv(0xD5); //--set display clock divide ratio/oscillator frequency
+	spi2_sendRecv(0xF0); //--set divide ratio
+	spi2_sendRecv(0xD9); //--set pre-charge period
+	spi2_sendRecv(0x22); //
+	spi2_sendRecv(0xDA); //--set com pins hardware configuration
+	spi2_sendRecv(0x12);
+	spi2_sendRecv(0xDB); //--set vcomh
+	spi2_sendRecv(0x20); //0x20,0.77xVcc
+	spi2_sendRecv(0x8D); //--set DC-DC enable
+	spi2_sendRecv(0x14); //
+	spi2_sendRecv(0xAF); //--turn on SSD1306 panel
+
+/*
     spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,
     spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
     spi2_sendRecv(0x51);
@@ -118,8 +154,9 @@ void display_init()
     spi2_sendRecv(0x3f);
     spi2_sendRecv(0xa4);  // SH110X_DISPLAYALLON_RESUME,
     spi2_sendRecv(0xa6);  // SH110X_NORMALDISPLAY,
-    spi2_sendRecv(0xAF);  // SH110x_DISPLAYON
+    spi2_sendRecv(0xAF);  // SH110x_DISPLAYON*/
     gpio_setPin(LCD_CS);
+    display_render();
 }
 
 void display_terminate()
@@ -127,18 +164,18 @@ void display_terminate()
     spi2_terminate();
 }
 
-void display_renderRows(uint8_t startRow, uint8_t endRow)
+void display_renderPages(uint8_t startPage, uint8_t endPage)
 {
     gpio_clearPin(LCD_CS);
 
-    for(uint8_t row = startRow; row <= endRow; row++)
+    for(uint8_t page = startPage; page <= endPage; page++)
     {
         gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        (void) spi2_sendRecv(0xB0 | row); /* Set Y position         */
-        (void) spi2_sendRecv(0x00);       /* Set X position         */
-        (void) spi2_sendRecv(0x10);
+        (void) spi2_sendRecv(0xB0 | page); /* Set page (vertical position)         */
+        (void) spi2_sendRecv(0x00);       /* Set X position/column/segment         */
+        (void) spi2_sendRecv(0x10);       /* to 0 across two commands              */
         gpio_setPin(LCD_RS);              /* RS high -> data mode   */
-        display_renderRow(row);
+        display_renderPage(page);
     }
 
     gpio_setPin(LCD_CS);
@@ -146,7 +183,7 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
 void display_render()
 {
-    display_renderRows(0, (SCREEN_WIDTH / 8) - 1);
+    display_renderPages(0, (SCREEN_HEIGHT / 8) - 1);
 }
 
 bool display_renderingInProgress()
