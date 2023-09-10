@@ -41,21 +41,20 @@ static uint8_t frameBuffer[FB_SIZE];
  * \internal
  * Send one row of pixels to the display.
  * Pixels in framebuffer are stored "by rows", while display needs data to be
- * sent "by columns": this function performs the needed conversion.
+ * sent "by page": this function performs the needed conversion.
  *
- * @param pixel: pixel row to be be sent.
+ * @param page: page of rows to be be sent.
  */
 void display_renderPage(uint8_t page)
 {
     for(uint8_t seg = 0; seg < SCREEN_WIDTH; seg++)
     {
         uint8_t out = 0;
-        uint8_t tmp;// = frameBuffer[(i * SCREEN_WIDTH/8) + (SCREEN_WIDTH/8 - 1 - page)];
+        uint8_t tmp;
 
         for(uint8_t row = 0; row < 8; row++) //step through each of the 8 rows in the page to generate a segment (page-column)
         {
             tmp = frameBuffer[(row + page*8)*SCREEN_WIDTH/8+seg/8];
-            //out |= ((tmp >> (7-j)) & 0x01) << j;
             out |= ((tmp >> (seg % 8)) & 0x01) << row;
         }
         spi2_sendRecv(out);
@@ -99,59 +98,26 @@ void display_init()
 
     gpio_clearPin(LCD_RS);// RS low -> command mode
 
-	/* Init LCD */
-	spi2_sendRecv(0xAE); //display off
-	spi2_sendRecv(0x20); //Set Memory Addressing Mode   
-	spi2_sendRecv(0x10); //00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid
-	spi2_sendRecv(0xB0); //Set Page Start Address for Page Addressing Mode,0-7
-	spi2_sendRecv(0xC8); //Set COM Output Scan Direction
-	spi2_sendRecv(0x00); //---set low column address
-	spi2_sendRecv(0x00); //---set high column address
-	spi2_sendRecv(0x40); //--set start line address
-	spi2_sendRecv(0x81); //--set contrast control register
-	spi2_sendRecv(0xFF);
-	spi2_sendRecv(0xA1); //--set segment re-map 0 to 127
-	spi2_sendRecv(0xA6); //--set normal display
-	spi2_sendRecv(0xA8); //--set multiplex ratio(1 to 64)
-	spi2_sendRecv(0x3F); //
-	spi2_sendRecv(0xA4); //0xa4,Output follows RAM content;0xa5,Output ignores RAM content
-	spi2_sendRecv(0xD3); //-set display offset
-	spi2_sendRecv(0x00); //-not offset
-	spi2_sendRecv(0xD5); //--set display clock divide ratio/oscillator frequency
-	spi2_sendRecv(0xF0); //--set divide ratio
-	spi2_sendRecv(0xD9); //--set pre-charge period
-	spi2_sendRecv(0x22); //
-	spi2_sendRecv(0xDA); //--set com pins hardware configuration
-	spi2_sendRecv(0x12);
-	spi2_sendRecv(0xDB); //--set vcomh
-	spi2_sendRecv(0x20); //0x20,0.77xVcc
-	spi2_sendRecv(0x8D); //--set DC-DC enable
-	spi2_sendRecv(0x14); //
-	spi2_sendRecv(0xAF); //--turn on SSD1306 panel
+    /* Init LCD */
+    spi2_sendRecv(0xAE); //Display Off
+    spi2_sendRecv(0x20); //Memory Addressing Mode
+    spi2_sendRecv(0x10); //Page Addressing Mode
+    spi2_sendRecv(0xD3); //Display Offset
+    spi2_sendRecv(0x00); //Display Offset
+    spi2_sendRecv(0xA1); //Segment re-map
+    spi2_sendRecv(0xC8); //COM Output Scan Direction
+    spi2_sendRecv(0xDA); //COM Pins Hardware Configuration
+    spi2_sendRecv(0x12); //COM Pins Hardware Configuration
+    spi2_sendRecv(0x81); //Contrast Control
+    spi2_sendRecv(0x7F); //Contrast Control
+    spi2_sendRecv(0xA4); //Disable Entire Display On
+    spi2_sendRecv(0xA6); //Normal Display
+    spi2_sendRecv(0xD5); //Oscillator Frequency
+    spi2_sendRecv(0xF0); //Oscillator Frequency
+    spi2_sendRecv(0x8D); //Charge Pump Regulator
+    spi2_sendRecv(0x14); //Charge Pump Regulator
+    spi2_sendRecv(0xAF); //--turn on SSD1306 panel
 
-/*
-    spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,
-    spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
-    spi2_sendRecv(0x51);
-    spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,
-    spi2_sendRecv(0x4F);
-    spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,
-    spi2_sendRecv(0x8A);
-    spi2_sendRecv(0xA0);  // SH110X_SEGREMAP,
-    spi2_sendRecv(0xC0);  // SH110X_COMSCANINC,
-    spi2_sendRecv(0xDC);  // SH110X_SETDISPSTARTLINE, 0x0,
-    spi2_sendRecv(0x00);
-    spi2_sendRecv(0xd3);  // SH110X_SETDISPLAYOFFSET, 0x60,
-    spi2_sendRecv(0x60);
-    spi2_sendRecv(0xd9);  // SH110X_SETPRECHARGE, 0x22,
-    spi2_sendRecv(0x22);
-    spi2_sendRecv(0xdb);  // SH110X_SETVCOMDETECT, 0x35,
-    spi2_sendRecv(0x35);
-    spi2_sendRecv(0xa8);  // SH110X_SETMULTIPLEX, 0x3F,
-    spi2_sendRecv(0x3f);
-    spi2_sendRecv(0xa4);  // SH110X_DISPLAYALLON_RESUME,
-    spi2_sendRecv(0xa6);  // SH110X_NORMALDISPLAY,
-    spi2_sendRecv(0xAF);  // SH110x_DISPLAYON*/
     gpio_setPin(LCD_CS);
     display_render();
 }
