@@ -36,6 +36,15 @@
  */
 #define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
 static uint8_t frameBuffer[FB_SIZE];
+uint8_t displayChipSelected = false;
+
+void select_display_chip(uint8_t value)
+{
+    displayChipSelected = value;
+    #ifdef LCD_CS
+    value ? gpio_clearPin(LCD_CS) : gpio_setPin(LCD_CS);
+    #endif
+}
 
 /**
  * \internal
@@ -82,11 +91,13 @@ void display_init()
     /*
      * Initialise GPIOs for LCD control
      */
+    #ifdef LCD_CS
     gpio_setMode(LCD_CS,  OUTPUT);
+    #endif
     gpio_setMode(LCD_RST, OUTPUT);
     gpio_setMode(LCD_RS,  OUTPUT);
 
-    gpio_setPin(LCD_CS);
+    select_display_chip(false);
     gpio_clearPin(LCD_RS);
 
     gpio_clearPin(LCD_RST); // Reset controller
@@ -94,7 +105,7 @@ void display_init()
     gpio_setPin(LCD_RST);
     delayMs(50);
 
-    gpio_clearPin(LCD_CS);
+    select_display_chip(true);
 
     gpio_clearPin(LCD_RS);// RS low -> command mode
 
@@ -118,8 +129,7 @@ void display_init()
     spi2_sendRecv(0x14); //Charge Pump Regulator
     spi2_sendRecv(0xAF); //--turn on SSD1306 panel
 
-    gpio_setPin(LCD_CS);
-    display_render();
+    select_display_chip(false);
 }
 
 void display_terminate()
@@ -129,7 +139,7 @@ void display_terminate()
 
 void display_renderPages(uint8_t startPage, uint8_t endPage)
 {
-    gpio_clearPin(LCD_CS);
+    select_display_chip(true);
 
     for(uint8_t page = startPage; page <= endPage; page++)
     {
@@ -141,7 +151,7 @@ void display_renderPages(uint8_t startPage, uint8_t endPage)
         display_renderPage(page);
     }
 
-    gpio_setPin(LCD_CS);
+    select_display_chip(false);
 }
 
 void display_render()
@@ -151,7 +161,7 @@ void display_render()
 
 bool display_renderingInProgress()
 {
-    return (gpio_readPin(LCD_CS) == 0);
+    return displayChipSelected;
 }
 
 void *display_getFrameBuffer()
@@ -161,13 +171,13 @@ void *display_getFrameBuffer()
 
 void display_setContrast(uint8_t contrast)
 {
-    gpio_clearPin(LCD_CS);
+    select_display_chip(true);
 
     gpio_clearPin(LCD_RS);             /* RS low -> command mode              */
     (void) spi2_sendRecv(0x81);        /* Set Electronic Volume               */
     (void) spi2_sendRecv(contrast);    /* Controller contrast range is 0 - 63 */
 
-    gpio_setPin(LCD_CS);
+    select_display_chip(false);
 }
 
 void display_setBacklightLevel(uint8_t level)
