@@ -44,11 +44,11 @@
 //#define ERR_LED     GPIOB,
 
 /* Display */
-#define LCD_RST     GPIOA,3
+#define LCD_RST     GPIOA,15
 #define LCD_RS      GPIOA,4
-#define LCD_CS      GPIOA,5
+//#define LCD_CS      GPIOA,5
 #define SPI2_CLK    GPIOB,13
-#define SPI2_SDO    GPIOB,14     // UNUSED
+//#define SPI2_SDO    GPIOB,14     // UNUSED
 #define SPI2_SDI    GPIOB,15
 
 /* Keyboard */
@@ -60,7 +60,7 @@
 #define KB_COL0     GPIOB,8
 #define KB_COL1     GPIOB,9
 #define KB_COL2     GPIOB,10
-#define KB_COL3     GPIOB,11
+#define KB_COL3     GPIOB,12
 
 
 #define PTT_SW      GPIOA,0	//STM32F401 PA0, BOOT0 
@@ -71,14 +71,14 @@
 #define AUDIO_SPK   GPIOA,1	//STM32F401 PWM T2_CH2
 #define BASEBAND_RX GPIOA,6	//STM32F401 ADC6
 #define BASEBAND_TX GPIOA,5	//STM32F401 PWM T2_CH1
-#define SPK_MUTE    GPIOB,5
+#define SPK_MUTE    GPIOB,14
 #define MIC_MUTE    GPIOB,5
 
 /* PLL */
 #define PLL_LE      GPIOA,8
 #define PLL_CLK     GPIOA,9
 #define PLL_DAT     GPIOA,10
-#define PLL_LD      GPIOA,4
+#define PLL_LD      GPIOA,7
 
 /* GPS */
 #define GPS_TX      GPIOB,6  	//STM32F401 TX1
@@ -93,7 +93,11 @@
 #define USB_DM      GPIOA,11	//STM32F401 USB Data Minus
 
 /* Serial */
-#define SER_RX1     GPIOA,3	//STM32F401 RX1
-#define SER_TX1     GPIOA,2	//STM32F401 TX1
+#define SER_RX1     GPIOA,3	//STM32F401 RX2
+#define SER_TX1     GPIOA,2	//STM32F401 TX2
+
+/* ISP */
+#define SWDIO       GPIOA,13
+#define SWCLK       GPIOA,14
 
 #endif
