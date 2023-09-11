@@ -36,12 +36,9 @@ void radio_init(const rtxStatus_t *rtxState)
     config = rtxState;
 
     radioStatus = OFF;
-    gpio_setMode(PTT_SW, INPUT);
-    gpio_setMode(PTT_OUT, OUTPUT);
     gpio_setMode(SPK_MUTE, OUTPUT);
     gpio_setMode(MIC_MUTE, OUTPUT);
 
-    gpio_clearPin(PTT_OUT);
     gpio_clearPin(SPK_MUTE);
     gpio_clearPin(MIC_MUTE);
 
@@ -107,7 +104,7 @@ void radio_enableRx()
     MC145158_setFrequency(config->rxFrequency-IF_FREQ, PLL_DIVISOR);
 
     radioStatus = RX;
-    gpio_clearPin(PTT_OUT);
+    gpio_setPin(PTT_OUT);
 }
 
 void radio_enableTx()
@@ -118,13 +115,13 @@ void radio_enableTx()
     MC145158_setFrequency(config->txFrequency, PLL_DIVISOR);
 
     radioStatus = TX;
-    gpio_setPin(PTT_OUT);
+    gpio_clearPin(PTT_OUT);
 }
 
 void radio_disableRtx()
 {
     radioStatus = OFF;
-    gpio_clearPin(PTT_OUT);
+    gpio_setPin(PTT_OUT);
 }
 
 void radio_updateConfiguration()

@@ -54,7 +54,7 @@ memory_t *memory = ((memory_t *) baseAddress);
  *
  * @return number currently active data block or -1 if memory data is invalid.
  */
-static int findActiveBlock()
+/*static int findActiveBlock()
 {
     // Check for invalid memory data
     if(memory->magic != MEM_MAGIC)
@@ -91,7 +91,7 @@ static int findActiveBlock()
         return -2;
 
     return block;
-}
+}*/
 
 void nvm_init()
 {
@@ -116,11 +116,11 @@ void nvm_readHwInfo(hwInfo_t *info)
 int nvm_readVfoChannelData(channel_t *channel)
 {
     // Test channel for now
-    channel->mode         = OPMODE_M17;
-    channel->bandwidth    = BW_12_5;
+    channel->mode         = OPMODE_FM;
+    channel->bandwidth    = BW_25;
     channel->power        = 1.0;
     channel->rx_frequency = 430000000;
-    channel->tx_frequency = 430000000;
+    channel->tx_frequency = 436000000;
     channel->fm.rxToneEn  = 0; //disabled
     channel->fm.rxTone    = 0; //and no ctcss/dcs selected
     channel->fm.txToneEn  = 0;
@@ -128,7 +128,7 @@ int nvm_readVfoChannelData(channel_t *channel)
 
     return 0;
 }
-
+/*
 int nvm_readSettings(settings_t *settings)
 {
     int block = findActiveBlock();
@@ -147,12 +147,12 @@ int nvm_writeSettings(const settings_t *settings)
     int      block   = findActiveBlock();
     uint16_t prevCrc = 0;
 
-    /*
+*/    /*
      * Memory never initialised or save space finished: erase all the sector.
      * On STM32F405 the settings are saved in sector 11, starting at address
      * 0x08060000.
      */
-    if((block < 0) || (block >= 2047))
+/*    if((block < 0) || (block >= 2047))
     {
         flash_eraseSector(11);
         addr = ((uint32_t) &(memory->magic));
@@ -187,8 +187,33 @@ int nvm_writeSettings(const settings_t *settings)
     return 0;
 }
 
+
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
     (void) vfo;
     return nvm_writeSettings(settings);
 }
+*/
+
+int nvm_readSettings(settings_t *settings)
+{
+    (void) settings;
+
+    return -1;
+}
+
+int nvm_writeSettings(const settings_t *settings)
+{
+    (void) settings;
+
+    return -1;
+}
+
+int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
+{
+    (void) settings;
+    (void) vfo;
+
+    return -1;
+}
+
