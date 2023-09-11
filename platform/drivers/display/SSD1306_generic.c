@@ -80,11 +80,14 @@ void display_init()
      * Initialise SPI2 for external flash and LCD
      */
     gpio_setMode(SPI2_CLK, ALTERNATE);
-    gpio_setMode(SPI2_SDO, ALTERNATE);
     gpio_setMode(SPI2_SDI, ALTERNATE);
     gpio_setAlternateFunction(SPI2_CLK, 5); /* SPI2 is on AF5 */
-    gpio_setAlternateFunction(SPI2_SDO, 5);
     gpio_setAlternateFunction(SPI2_SDI, 5);
+
+    #ifdef SPI2_SDO
+    gpio_setMode(SPI2_SDO, ALTERNATE);
+    gpio_setAlternateFunction(SPI2_SDO, 5);
+    #endif
 
     spi2_init();
 
