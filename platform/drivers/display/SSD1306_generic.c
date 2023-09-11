@@ -58,6 +58,10 @@ void display_renderPage(uint8_t page)
 {
     for(uint8_t seg = 0; seg < SCREEN_WIDTH; seg++)
     {
+        // this function can be improved by working through the segments in chunks
+        // of size matching the array unit (8 bits in this case)
+        // we are currently reading only the first bit and discarding the other seven
+        // only to re-read the array on the next iteration
         uint8_t out = 0;
         uint8_t tmp;
 
