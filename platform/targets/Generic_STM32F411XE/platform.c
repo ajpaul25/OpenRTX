@@ -24,7 +24,18 @@
 #include <string.h>
 #include <interfaces/audio.h>
 
-static hwInfo_t hwInfo;
+/* TODO: Hardcoded hwInfo until we implement reading from flash */
+static const hwInfo_t hwInfo =
+{
+    .vhf_maxFreq = 174,
+    .vhf_minFreq = 136,
+    .vhf_band    = 1,
+    .uhf_maxFreq = 480,
+    .uhf_minFreq = 400,
+    .uhf_band    = 1,
+    .hw_version  = 0,
+    .name        = "Generic STM32F401XC"
+};
 
 void platform_init()
 {
