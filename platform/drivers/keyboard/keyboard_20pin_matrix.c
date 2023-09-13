@@ -51,7 +51,7 @@ keyboard_t kbd_getKeys()
 
     gpio_clearPin(KB_COL1);
     delayUs(1);
-    if(gpio_readPin(KB_ROW0) == 0) keys |= KEY_F2;
+    if(gpio_readPin(KB_ROW0) == 0) keys |= KEY_MONI;
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_2;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_5;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_8;
