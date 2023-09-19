@@ -157,6 +157,7 @@ bool platform_pwrButtonStatus()
 
 void platform_ledOn(led_t led)
 {
+    (void) led;
 /*    switch(led)
     {
         case GREEN:
@@ -174,6 +175,7 @@ void platform_ledOn(led_t led)
 
 void platform_ledOff(led_t led)
 {
+    (void) led;
 /*    switch(led)
     {
         case GREEN:
