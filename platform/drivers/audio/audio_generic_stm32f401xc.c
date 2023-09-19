@@ -23,7 +23,7 @@
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
 #include <hwconfig.h>
-//#include "toneGenerator_generic.h"
+#include "toneGenerator_generic.h"
 #include "stm32_pwm.h"
 #include "stm32_adc.h"
 
@@ -46,7 +46,7 @@ static const uint8_t pathCompatibilityMatrix[9][9] =
 
 static void stm32pwm_startCbk()
 {
-    //toneGen_lockBeep();
+    toneGen_lockBeep();
     TIM3->CCER |= TIM_CCER_CC3E;
     TIM3->CR1  |= TIM_CR1_CEN;
 }
@@ -54,7 +54,7 @@ static void stm32pwm_startCbk()
 static void stm32pwm_stopCbk()
 {
     TIM3->CCER &= ~TIM_CCER_CC3E;
-    //toneGen_unlockBeep();
+    toneGen_unlockBeep();
 }
 
 static const struct PwmChannelCfg stm32pwm_cfg =

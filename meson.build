@@ -222,6 +222,7 @@ stm32f4xx_src = ['platform/mcu/STM32F4xx/boot/libc_integration.cpp',
                  'platform/mcu/STM32F4xx/drivers/flash.c',
                  'platform/drivers/audio/stm32_adc.cpp',
                  'platform/drivers/audio/stm32_pwm.cpp',
+                 'platform/drivers/tones/toneGenerator_generic.cpp',
                  'platform/mcu/CMSIS/Device/ST/STM32F4xx/Source/system_stm32f4xx.c']
 
 stm32f4xx_inc = ['platform/mcu/CMSIS/Include',
