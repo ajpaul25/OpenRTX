@@ -29,11 +29,18 @@
  * Note: if increasing the main stack size also increase the ORIGIN value in
  * the MEMORY definitions below accordingly.
  */
-_main_stack_size = 0x00000200;                     /* main stack = 512Bytes */
-_main_stack_top  = 0x20000000 + _main_stack_size;
+_ram_size = 128K;
+_ram_start = 0x20000000;
+_flash_size = 512K;
+_flash_start = 0x8000000;
+_flash_nvmem_size = 48K;
+_main_stack_size = 0x200;                     /* main stack = 512Bytes */
+
+
+_main_stack_top  = ORIGIN(ram);
 ASSERT(_main_stack_size   % 8 == 0, "MAIN stack size error");
 
-_heap_end = 0x20010000;                            /* end of available ram, before the stack  */
+_heap_end = ORIGIN(ram) + LENGTH(ram);                            /* end of available ram, before the stack  */
 
 /* identify the Entry Point  */
 ENTRY(_Z13Reset_Handlerv)
@@ -41,8 +48,8 @@ ENTRY(_Z13Reset_Handlerv)
 /* specify the memory areas  */
 MEMORY
 {
-    flash(rx)    : ORIGIN = 0x08000000, LENGTH =   256K - 48K
-    ram(wx) : ORIGIN = 0x20000200, LENGTH = 64K - 0x200
+    flash(rx)    : ORIGIN = _flash_start, LENGTH =   _flash_size - _flash_nvmem_size
+    ram(wx) : ORIGIN = _ram_start + _main_stack_size, LENGTH = _ram_size - _main_stack_size
 }
 
 /* now define the output sections  */
