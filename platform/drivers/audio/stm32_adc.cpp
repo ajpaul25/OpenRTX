@@ -45,8 +45,12 @@ struct streamCtx *AdcContext[3];
 static constexpr AdcPeriph periph[] =
 {
     {(ADC_TypeDef *) ADC1_BASE, &Dma2_Stream0_hdl, Timer(TIM2_BASE)},
+#ifdef ADC2_BASE
     {(ADC_TypeDef *) ADC2_BASE, &Dma2_Stream2_hdl, Timer(TIM2_BASE)},
+#ifdef ADC3_BASE
     {(ADC_TypeDef *) ADC3_BASE, &Dma2_Stream1_hdl, Timer(TIM2_BASE)},
+#endif
+#endif
 };
 
 
@@ -121,13 +125,17 @@ void stm32adc_init(const uint8_t instance)
             RCC->APB2ENR |= RCC_APB2ENR_ADC1EN;
             break;
 
+#ifdef RCC_APB2ENR_ADC2EN
         case 1:
             RCC->APB2ENR |= RCC_APB2ENR_ADC2EN;
             break;
 
+#ifdef RCC_APB2ENR_ADC3EN
         case 2:
             RCC->APB2ENR |= RCC_APB2ENR_ADC3EN;
             break;
+#endif
+#endif
     }
 
     /*
