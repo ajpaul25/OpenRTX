@@ -34,7 +34,7 @@ static const hwInfo_t hwInfo =
     .uhf_minFreq = 400,
     .uhf_band    = 1,
     .hw_version  = 0,
-    .name        = "Generic STM32F401XC"
+    .name        = "LMRefit"
 };
 
 void platform_init()

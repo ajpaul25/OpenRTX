@@ -425,51 +425,22 @@ mod17_inc = inc + stm32f405_inc + ['platform/targets/Module17']
 mod17_def = def + stm32f405_def + {'PLATFORM_MOD17': ''}
 
 ##
-## Generic_STM32F401XC
+## LMRefit
 ##
-generic_stm32f401xc_src = ['platform/targets/Generic_STM32F401XC/platform.c',
-                          'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
-                          'platform/drivers/baseband/MC145158.c',
-                          #'platform/drivers/stubs/display_stub.c',
-                          #'platform/drivers/stubs/keyboard_stub.c',
-                          #'platform/drivers/stubs/nvmem_stub.c',
-                          #'platform/drivers/stubs/radio_stub.c',
-                          'platform/drivers/keyboard/keyboard_20pin_matrix.c',
-                          #'platform/drivers/stubs/audio_stub.c',
-                          'platform/drivers/audio/audio_generic_stm32f401xc.c',
-                          'platform/drivers/display/SSD1306_generic.c',
-                          'platform/drivers/NVM/nvmem_generic_stm32f401xc.c',
-                          'platform/drivers/stubs/cps_io_stub.c',
-                         ]
+lmrefit_src = ['platform/targets/LMRefit/platform.c',
+               'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
+               'platform/drivers/baseband/MC145158.c',
+               'platform/drivers/keyboard/keyboard_20pin_matrix.c',
+               'platform/drivers/audio/audio_generic_stm32f401xc.c',
+               'platform/drivers/display/SSD1306_generic.c',
+               'platform/drivers/NVM/nvmem_generic_stm32f401xc.c',
+               'platform/drivers/stubs/cps_io_stub.c',
+               ]
 
 
-generic_stm32f401xc_src = src + openrtx_ui_default + generic_stm32f401xc_src + stm32f401_src
-generic_stm32f401xc_inc = inc + stm32f401_inc + ['platform/targets/Generic_STM32F401XC']
-generic_stm32f401xc_def = def + stm32f401_def + {'PLATFORM_GENERIC_STM32F401XC': ''}
-
-##
-## Generic_STM32F411XE
-##
-generic_stm32f411xe_src = ['platform/targets/Generic_STM32F411XE/platform.c',
-                          'platform/drivers/baseband/radio_generic_stm32f401xc.cpp',
-                          'platform/drivers/baseband/MC145158.c',
-                          #'platform/drivers/stubs/display_stub.c',
-                          #'platform/drivers/stubs/keyboard_stub.c',
-                          #'platform/drivers/stubs/nvmem_stub.c',
-                          #'platform/drivers/stubs/radio_stub.c',
-                          'platform/drivers/keyboard/keyboard_20pin_matrix.c',
-                          #'platform/drivers/stubs/audio_stub.c',
-                          'platform/drivers/audio/audio_generic_stm32f401xc.c',
-                          'platform/drivers/display/SSD1306_generic.c',
-                          'platform/drivers/NVM/nvmem_generic_stm32f401xc.c',
-                          'platform/drivers/stubs/cps_io_stub.c',
-                         ]
-
-
-generic_stm32f411xe_src = src + openrtx_ui_default + generic_stm32f411xe_src + stm32f411_src
-
-generic_stm32f411xe_inc = inc + stm32f411_inc + ['platform/targets/Generic_STM32F411XE']
-generic_stm32f411xe_def = def + stm32f411_def + {'PLATFORM_GENERIC_STM32F411XE': ''}
+lmrefit_src = src + openrtx_ui_default + lmrefit_src + stm32f401_src
+lmrefit_inc = inc + stm32f401_inc + ['platform/targets/LMRefit']
+lmrefit_def = def + stm32f401_def + {'PLATFORM_LMREFIT': ''}
 
 ##
 ## -------------------------- Compilation arguments ----------------------------
@@ -556,21 +527,12 @@ foreach k, v : mod17_def
   endif
 endforeach
 
-generic_stm32f401xc_args = []
-foreach k, v : generic_stm32f401xc_def
+lmrefit_args = []
+foreach k, v : lmrefit_def
   if v == ''
-    generic_stm32f401xc_args += '-D@0@'.format(k)
+    lmrefit_args += '-D@0@'.format(k)
   else
-    generic_stm32f401xc_args += '-D@0@=@1@'.format(k, v)
-  endif
-endforeach
-
-generic_stm32f411xe_args = []
-foreach k, v : generic_stm32f411xe_def
-  if v == ''
-    generic_stm32f411xe_args += '-D@0@'.format(k)
-  else
-    generic_stm32f411xe_args += '-D@0@=@1@'.format(k, v)
+    lmrefit_args += '-D@0@=@1@'.format(k, v)
   endif
 endforeach
 
@@ -629,22 +591,13 @@ mod17_opts  = {'sources': mod17_src,
                'dependencies': [codec2_dep],
                'include_directories': mod17_inc}
 
-generic_stm32f401xc_opts  = {'sources': generic_stm32f401xc_src,
-               'c_args': generic_stm32f401xc_args,
-               'cpp_args': generic_stm32f401xc_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f4_256Kflash_96Kram.ld',
-                              '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
-               'include_directories': generic_stm32f401xc_inc}
-
-generic_stm32f411xe_opts  = {'sources': generic_stm32f411xe_src,
-               'c_args': generic_stm32f411xe_args,
-               'cpp_args': generic_stm32f411xe_args,
-               'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f4_512Kflash_128Kram.ld',
-                              '-Wl,--print-memory-usage'],
-               'dependencies': [codec2_dep],
-               'include_directories': generic_stm32f411xe_inc}
-
+lmrefit_opts  = {'sources': lmrefit_src,
+                'c_args': lmrefit_args,
+                'cpp_args': lmrefit_args,
+                'link_args' : ['-Wl,-T../platform/mcu/STM32F4xx/linker_script_stm32f4_256Kflash_96Kram.ld',
+                               '-Wl,--print-memory-usage'],
+                'dependencies': [codec2_dep],
+                'include_directories': lmrefit_inc}
 
 ##
 ## ---------------------------- Compilation targets ----------------------------
@@ -692,14 +645,8 @@ targets = [
    'wrap': ' ',
    'load_addr': ' '},
 
-   {'name': 'generic_stm32f401xc',
-   'opts': generic_stm32f401xc_opts,
-   'flashable': true,
-   'wrap': ' ',
-   'load_addr': ' '},
-
-   {'name': 'generic_stm32f411xe',
-   'opts': generic_stm32f411xe_opts,
+   {'name': 'lmrefit',
+   'opts': lmrefit_opts,
    'flashable': true,
    'wrap': ' ',
    'load_addr': ' '},
@@ -771,7 +718,7 @@ foreach t : targets
                     command : [gd77_loader, '-f', '@INPUT@', '-m', 'DM-1801',])
 
     # Module17 (and other STM32 generic dfu targets) also uses dfu-tool for flashing
-    elif name == 'openrtx_mod17' or name == 'openrtx_generic_stm32f401xc' or name == 'openrtx_generic_stm32f411xe'
+    elif name == 'openrtx_mod17' or name == 'lmrefit'
 
       # Wrap target for dfu-targets for consistency, same output as bin target
       custom_target(name+'_wrap',
