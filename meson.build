@@ -718,7 +718,7 @@ foreach t : targets
                     command : [gd77_loader, '-f', '@INPUT@', '-m', 'DM-1801',])
 
     # Module17 (and other STM32 generic dfu targets) also uses dfu-tool for flashing
-    elif name == 'openrtx_mod17' or name == 'lmrefit'
+    elif name == 'openrtx_mod17' or name == 'openrtx_lmrefit'
 
       # Wrap target for dfu-targets for consistency, same output as bin target
       custom_target(name+'_wrap',
