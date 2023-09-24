@@ -81,7 +81,8 @@ openrtx_inc = ['openrtx/include',
                'platform/drivers/tones',
                'platform/drivers/baseband',
                'platform/drivers/backlight',
-               'platform/drivers/chSelector']
+               'platform/drivers/chSelector',
+               'platform/drivers/ext_GPIO']
 
 ##
 ## OpenRTX UI sources
@@ -435,6 +436,8 @@ lmrefit_src = ['platform/targets/LMRefit/platform.c',
                'platform/drivers/display/SSD1306_generic.c',
                'platform/drivers/NVM/nvmem_generic_stm32f401xc.c',
                'platform/drivers/stubs/cps_io_stub.c',
+               'platform/drivers/ext_GPIO/pcf8575.cpp',
+               'lib/miosix-kernel/miosix/arch/common/drivers/stm32f2_f4_i2c.cpp',
                ]
 
 
