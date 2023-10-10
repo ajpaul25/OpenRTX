@@ -51,16 +51,20 @@
 //#define SPI2_SDO    GPIOB,14     // UNUSED
 #define SPI2_SDI    GPIOB,15
 
+/* I2C */
+#define I2C1_SCL     GPIOB,8
+#define I2C1_SDA     GPIOB,9
+
 /* Keyboard */
-#define KB_ROW0     GPIOB,0
-#define KB_ROW1     GPIOB,1
-#define KB_ROW2     GPIOB,2
-#define KB_ROW3     GPIOB,3
-#define KB_ROW4     GPIOB,4
-#define KB_COL0     GPIOB,8
-#define KB_COL1     GPIOB,9
-#define KB_COL2     GPIOB,10
-#define KB_COL3     GPIOB,12
+#define KB_ROW0     0
+#define KB_ROW1     1
+#define KB_ROW2     2
+#define KB_ROW3     3
+#define KB_ROW4     4
+#define KB_COL0     8
+#define KB_COL1     9
+#define KB_COL2     10
+#define KB_COL3     12
 
 
 #define PTT_SW      GPIOA,0	//STM32F401 PA0, BOOT0 

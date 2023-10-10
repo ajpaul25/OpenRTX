@@ -23,7 +23,8 @@
 #include <hwconfig.h>
 #include <string.h>
 #include <interfaces/audio.h>
-#include <pcf8575.h>
+#include <I2C1.h>
+//#include <pcf8575.h>
 #include <toneGenerator_generic.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
@@ -74,7 +75,8 @@ void platform_init()
     nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
     toneGen_init();                  /* Initialise tone generator              */
     audio_init();                    /* Initialise audio management module     */
-    pcf8575_init();                  /* Initialize the i2c gpio expander       */
+    i2c1_init();                     /* Initialize the i2c bus                 */
+    //pcf8575_init();                  /* Initialize the i2c gpio expander       */
 }
 
 void platform_terminate()
@@ -88,7 +90,8 @@ void platform_terminate()
     nvm_terminate();
     toneGen_terminate();
     audio_terminate();
-    pcf8575_terminate();
+    i2c1_terminate();
+    //pcf8575_terminate();
 
     /* Finally, remove power supply */
 //    gpio_clearPin(PWR_SW);
