@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <peripherals/gpio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,21 +42,15 @@ void pcf8575_init();
  */
 void pcf8575_terminate();
 
-/*
-void pcf8575_gpio_setMode(void *port, uint8_t pin, enum Mode mode);
+void pcf8575_gpio_setMode(uint8_t pin, enum Mode mode);
 
-void pcf8575_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum);
+void pcf8575_gpio_setPin(uint8_t pin);
 
-void pcf8575_setOutputSpeed(void *port, uint8_t pin, enum Speed spd);
+void pcf8575_gpio_clearPin(uint8_t pin);
 
-void pcf8575_setPin(void *port, uint8_t pin);
+void pcf8575_gpio_togglePin(uint8_t pin);
 
-void pcf8575_clearPin(void *port, uint8_t pin);
-
-void pcf8575_togglePin(void *port, uint8_t pin);
-
-uint8_t pcf8575_readPin(const void *port, uint8_t pin);
-*/
+uint8_t pcf8575_gpio_readPin(uint8_t pin);
 
 #ifdef __cplusplus
 }

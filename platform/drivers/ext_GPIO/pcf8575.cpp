@@ -20,48 +20,70 @@
 #include <drivers/stm32f2_f4_i2c.h>
 #include "pcf8575.h"
 
+using namespace miosix;
+
+I2C1Driver *i2c;
+uint16_t pinmode; //bit=1 signifies input
+uint16_t outputValue; //bit=0 signifies active
+uint16_t inputValue; //bit=0 signifies active
+
+
 void pcf8575_init()
 {
-
+    pinmode = 0xFFFF; //this is the default state of the device after powerup
+    outputValue = pinmode;
+    // pins must be high to be used as input.  this implies active-low
+    //initialize i2c
+    i2c = &I2C1Driver::instance();
+    //set all pins to pinmode
+    i2c->send(0x20,(void*)&pinmode,0x10); //under normal circumstances, this is unnecessary, but this enforces a known state
 }
 
 void pcf8575_terminate()
 {
-
-}
-/*
-void pcf8575_gpio_setMode(void *port, uint8_t pin, enum Mode mode)
-{
-
+    pinmode = outputValue = 0xFFFF;
+    i2c->send(0x20,(void*)&pinmode,0x10);
 }
 
-void pcf8575_gpio_setAlternateFunction(void *port, uint8_t pin, uint8_t afNum)
+void pcf8575_gpio_setMode(uint8_t pin, enum Mode mode)
 {
-
+    if(mode == OUTPUT) {
+      pinmode &= ~pin;
+    } else if (mode == INPUT) {
+      pinmode |= pin;
+    }
+    i2c->send(0x20,(void*)&pinmode,0x10);
 }
 
-void gpio_setOutputSpeed(void *port, uint8_t pin, enum Speed spd)
+void pcf8575_gpio_setPin(uint8_t pin)
 {
-
+    if(((pinmode >> pin) & 0x1) == 0x0){
+      outputValue |= 0x1 << pin;
+      i2c->send(0x20,(void*)&outputValue,0x10);
+    }
 }
 
-void gpio_setPin(void *port, uint8_t pin)
+void pcf8575_gpio_clearPin(uint8_t pin)
 {
-
+    if(((pinmode >> pin) & 0x1) == 0x0){
+      outputValue &= ~(0x1 << pin);
+      i2c->send(0x20,(void*)&outputValue,0x10);
+    }
 }
 
-void gpio_clearPin(void *port, uint8_t pin)
+void pcf8575_gpio_togglePin(uint8_t pin)
 {
-
+    if(((pinmode >> pin) & 0x1) == 0x0){
+      outputValue ^= 0x1 << pin;
+      i2c->send(0x20,(void*)&outputValue,0x10);
+    }
 }
 
-void gpio_togglePin(void *port, uint8_t pin)
+uint8_t pcf8575_gpio_readPin(uint8_t pin)
 {
-
-}
-
-uint8_t gpio_readPin(const void *port, uint8_t pin)
-{
+    if(((pinmode >> pin) & 0x1) == 0x1){
+      i2c->recv(0x20,(void*)&inputValue,0x10);
+      return (inputValue >> pin) & 0x1;
+    }
     return false;
 }
-*/
